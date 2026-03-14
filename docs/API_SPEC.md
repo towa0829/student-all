@@ -250,6 +250,6 @@ DELETE
 
 実装方針
 
-* middleware で protected route を検査
+* proxy で protected route を検査
 * 現在の protected route: /assignments, /calendar, /shifts, /dashboard, /classes, /tasks
 * 未認証時は /login?next=... へ遷移

@@ -125,3 +125,10 @@ AssignmentCard.tsx
 * UI改善
 * パフォーマンス最適化
 * PWA化
+
+---
+
+# 9 CIルール
+
+* GitHub Actions の CI で `npm run lint` を必須化する
+* main への push 前にローカルで lint を通す

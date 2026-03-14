@@ -21,7 +21,7 @@ Student's All は、授業・課題・予定・バイトシフト・給料・タ
 - ホーム画面とプレースホルダーページの追加
 - 型定義と Supabase クライアント基盤の整備
 - Supabase SSR クライアントの分離
-- middleware によるセッション同期
+- proxy によるセッション同期
 - SQL スキーマと RLS セットアップ手順の追加
 - ログイン、サインアップ、ログアウトの実装
 - /assignments への認証保護追加
@@ -61,6 +61,12 @@ npm run dev
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+`.env.example` をコピーして作成する場合:
+
+```bash
+cp .env.example .env.local
 ```
 
 Supabase の初期化手順は [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) にまとめています。
@@ -105,3 +111,4 @@ Supabase の初期化手順は [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) 
 - Server Actions を優先して実装する方針です。
 - 認証後の各機能は user_id を軸に Supabase 側で分離します。
 - docs フォルダの仕様を基準に進め、実装差分が出た場合はドキュメントも更新します。
+- GitHub Actions の CI で push / pull request 時に `npm run lint` を実行します。
