@@ -91,9 +91,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ├ app
 │ ├ assignments
 │ ├ calendar
+│ ├ classes
 │ ├ dashboard
 │ ├ login
 │ ├ shifts
+│ ├ tasks
 │ ├ globals.css
 │ ├ layout.tsx
 │ └ page.tsx
@@ -109,8 +111,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 	│ ├ assignments
 	│ ├ auth
 	│ ├ calendar
+	│ ├ classes
 	│ ├ home
-	│ └ shifts
+	│ ├ shifts
+	│ └ tasks
 	├ lib
 	└ types
 ```
@@ -119,7 +123,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 # Current Progress
 
-Step 7 完了
+Step 8 完了
 
 * プロジェクト構造の整理
 * ホーム画面の実装
@@ -138,6 +142,9 @@ Step 7 完了
 * バイト管理 CRUD 追加
 * 給料見込み集計追加
 * 今日のダッシュボード追加
+* 授業管理 CRUD 追加
+* タスク管理 CRUD 追加
+* classes/tasks 画面追加と認証保護追加
 
 ---
 

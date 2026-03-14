@@ -167,6 +167,38 @@ POST
 /api/tasks
 ```
 
+## Get Tasks
+
+GET
+
+```
+/api/tasks
+```
+
+## Update Task
+
+PATCH
+
+```
+/api/tasks/:id
+```
+
+更新対象
+
+```
+title
+due_date
+status
+```
+
+## Delete Task
+
+DELETE
+
+```
+/api/tasks/:id
+```
+
 ---
 
 # Classes
@@ -178,3 +210,46 @@ POST
 ```
 /api/classes
 ```
+
+## Get Classes
+
+GET
+
+```
+/api/classes
+```
+
+## Update Class
+
+PATCH
+
+```
+/api/classes/:id
+```
+
+更新対象
+
+```
+name
+day_of_week
+period
+room
+```
+
+## Delete Class
+
+DELETE
+
+```
+/api/classes/:id
+```
+
+---
+
+# Authentication and Access
+
+実装方針
+
+* middleware で protected route を検査
+* 現在の protected route: /assignments, /calendar, /shifts, /dashboard, /classes, /tasks
+* 未認証時は /login?next=... へ遷移

@@ -133,6 +133,8 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
                 <Link href="/dashboard">ダッシュボードへ</Link>
                 <Link href="/calendar">カレンダーへ</Link>
                 <Link href="/assignments">課題管理へ</Link>
+                <Link href="/classes">授業管理へ</Link>
+                <Link href="/tasks">タスク管理へ</Link>
                 <Link href="/">ホームへ</Link>
               </div>
             </div>

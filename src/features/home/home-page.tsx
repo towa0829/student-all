@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, CheckCircle2, Clock3, Wallet } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, Clock3, ListChecks, Wallet } from "lucide-react";
 import Link from "next/link";
 
 import { Panel } from "@/components/ui/panel";
@@ -18,6 +18,11 @@ const featureCards = [
     title: "シフトと給料",
     description: "勤務時間と時給から収入見込みを自動で計算します。",
     icon: Wallet
+  },
+  {
+    title: "授業・タスク",
+    description: "時間割と自由タスクを管理し、カレンダーとダッシュボードへ連携します。",
+    icon: ListChecks
   }
 ] as const;
 
@@ -28,7 +33,8 @@ const roadmap = [
   "Step 4: 課題管理 CRUD",
   "Step 5: カレンダー",
   "Step 6: バイト管理",
-  "Step 7: ダッシュボード"
+  "Step 7: ダッシュボード",
+  "Step 8: 授業とタスク CRUD"
 ] as const;
 
 export function HomePage() {
@@ -85,6 +91,20 @@ export function HomePage() {
                 </Link>
                 <Link
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 sm:w-auto"
+                  href="/classes"
+                >
+                  授業管理へ
+                  <BookOpen className="size-4" />
+                </Link>
+                <Link
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 sm:w-auto"
+                  href="/tasks"
+                >
+                  タスク管理へ
+                  <ListChecks className="size-4" />
+                </Link>
+                <Link
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   href="/dashboard"
                 >
                   今日のダッシュボードへ

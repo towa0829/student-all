@@ -73,6 +73,8 @@ Database
 
 ダッシュボードでは当日データを classes、assignments、shifts、tasks から同時取得し，ユーザー向けに 1 画面で要約表示する．
 
+授業管理とタスク管理はそれぞれ専用ページで CRUD を提供し，更新後は calendar と dashboard を再検証できるよう再描画する．
+
 ---
 
 # Authentication Flow
@@ -90,6 +92,8 @@ middleware で Session 管理
    ↓
 Protected Route Access
 ```
+
+Protected Route の対象は assignments, calendar, shifts, dashboard, classes, tasks とする．
 
 ---
 

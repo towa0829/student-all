@@ -99,6 +99,8 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
                 <Link href="/dashboard">ダッシュボードへ</Link>
                 <Link href="/calendar">カレンダーへ</Link>
                 <Link href="/shifts">バイト管理へ</Link>
+                <Link href="/classes">授業管理へ</Link>
+                <Link href="/tasks">タスク管理へ</Link>
                 <Link href="/">ホームへ</Link>
               </div>
             </div>
@@ -245,6 +247,8 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
                   <Link href="/dashboard">ダッシュボードへ</Link>
                   <Link href="/calendar">カレンダーへ</Link>
                   <Link href="/shifts">バイト管理へ</Link>
+                  <Link href="/classes">授業管理へ</Link>
+                  <Link href="/tasks">タスク管理へ</Link>
                   <Link href="/">ホームに戻る</Link>
                 </div>
               )}
