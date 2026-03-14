@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase-config";
 import type { Database } from "@/types/supabase";
 
-const protectedRoutes = ["/assignments"];
+const protectedRoutes = ["/assignments", "/calendar"];
 const authRoutes = ["/login"];
 
 export async function updateSession(request: NextRequest) {

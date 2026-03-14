@@ -67,6 +67,8 @@ Supabase Insert
 Database
 ```
 
+カレンダー表示では classes の繰り返し授業情報と assignments、shifts、tasks の日付データをサーバー側で集約してから UI に渡す．
+
 ---
 
 # Authentication Flow

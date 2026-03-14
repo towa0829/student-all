@@ -110,6 +110,16 @@ Body
 
 ---
 
+# Calendar
+
+実装方針
+
+* App Router の Server Component で月単位にデータ取得
+* classes は day_of_week を元に月間へ展開
+* assignments、shifts、tasks は日付ベースで集約
+
+---
+
 # Tasks
 
 ## Create Task

@@ -66,6 +66,13 @@ export function HomePage() {
                   保護された課題画面へ
                   <ArrowRight className="size-4" />
                 </Link>
+                <Link
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+                  href="/calendar"
+                >
+                  月間カレンダーを見る
+                  <ArrowRight className="size-4" />
+                </Link>
               </div>
             </div>
             <Panel className="grid gap-5 bg-slate-950 text-slate-50">

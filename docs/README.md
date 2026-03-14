@@ -90,6 +90,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 .
 ├ app
 │ ├ assignments
+│ ├ calendar
 │ ├ login
 │ ├ globals.css
 │ ├ layout.tsx
@@ -103,6 +104,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 	│ ├ layout
 	│ └ ui
 	├ features
+	│ ├ assignments
+	│ ├ auth
+	│ ├ calendar
 	│ └ home
 	├ lib
 	└ types
@@ -112,7 +116,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 # Current Progress
 
-Step 4 完了
+Step 5 完了
 
 * プロジェクト構造の整理
 * ホーム画面の実装
@@ -126,6 +130,8 @@ Step 4 完了
 * 認証保護ページ追加
 * 課題 CRUD 追加
 * 完了切り替え追加
+* カレンダー画面追加
+* 授業、課題、シフト、タスクの統合表示追加
 
 ---
 

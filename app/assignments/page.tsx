@@ -95,6 +95,10 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
               <p className="text-sm leading-7 text-slate-600 md:text-base">
                 {user.email} としてログイン中です。課題の作成、編集、削除、完了切り替えをこの画面で管理できます。
               </p>
+              <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
+                <Link href="/calendar">カレンダーへ</Link>
+                <Link href="/">ホームへ</Link>
+              </div>
             </div>
           </div>
           <form action={signOutAction}>
@@ -235,9 +239,10 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
                   編集をキャンセル
                 </Link>
               ) : (
-                <Link className="inline-flex text-sm font-semibold text-brand-200" href="/">
-                  ホームに戻る
-                </Link>
+                <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-200">
+                  <Link href="/calendar">カレンダーへ</Link>
+                  <Link href="/">ホームに戻る</Link>
+                </div>
               )}
             </Panel>
           </div>
