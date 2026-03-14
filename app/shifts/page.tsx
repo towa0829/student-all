@@ -130,6 +130,7 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
                 {user.email} のシフトを月単位で管理し、勤務時間と給料見込みを自動計算します。
               </p>
               <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
+                <Link href="/dashboard">ダッシュボードへ</Link>
                 <Link href="/calendar">カレンダーへ</Link>
                 <Link href="/assignments">課題管理へ</Link>
                 <Link href="/">ホームへ</Link>

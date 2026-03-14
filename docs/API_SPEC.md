@@ -147,6 +147,16 @@ DELETE
 
 ---
 
+# Dashboard
+
+実装方針
+
+* 今日の日付で classes、assignments、shifts、tasks を横断集計
+* 画面表示は Server Component で実行
+* 認証済みユーザーのみアクセス可能
+
+---
+
 # Tasks
 
 ## Create Task

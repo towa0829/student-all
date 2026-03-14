@@ -14,7 +14,7 @@ Student's All は、授業・課題・予定・バイトシフト・給料・タ
 
 ## Current Step
 
-現在は Step 6 まで実装済みです。
+現在は Step 7 まで実装済みです。
 
 - プロジェクト構造の整理
 - 再利用 UI コンポーネントの追加
@@ -31,8 +31,9 @@ Student's All は、授業・課題・予定・バイトシフト・給料・タ
 - classes、assignments、shifts、tasks の統合表示
 - shifts テーブルの CRUD 実装
 - 勤務時間と給料見込みの月間集計
+- 今日の授業、課題、シフト、タスクを集約したダッシュボード
 
-次の Step ではダッシュボードへ拡張します。
+次の Step では classes と tasks の CRUD 追加に進みます。
 
 ## Package Overview
 
@@ -68,6 +69,7 @@ Supabase の初期化手順は [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) 
 ├─ app
 │  ├─ assignments
 │  ├─ calendar
+│  ├─ dashboard
 │  ├─ login
 │  ├─ shifts
 │  ├─ globals.css

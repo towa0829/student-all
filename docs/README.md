@@ -91,6 +91,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ├ app
 │ ├ assignments
 │ ├ calendar
+│ ├ dashboard
 │ ├ login
 │ ├ shifts
 │ ├ globals.css
@@ -118,7 +119,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 # Current Progress
 
-Step 6 完了
+Step 7 完了
 
 * プロジェクト構造の整理
 * ホーム画面の実装
@@ -136,6 +137,7 @@ Step 6 完了
 * 授業、課題、シフト、タスクの統合表示追加
 * バイト管理 CRUD 追加
 * 給料見込み集計追加
+* 今日のダッシュボード追加
 
 ---
 

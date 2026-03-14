@@ -25,7 +25,10 @@ const roadmap = [
   "Step 1: プロジェクト構造と UI 基盤",
   "Step 2: Supabase 設定と接続方針",
   "Step 3: 認証機能",
-  "Step 4: 課題管理 CRUD"
+  "Step 4: 課題管理 CRUD",
+  "Step 5: カレンダー",
+  "Step 6: バイト管理",
+  "Step 7: ダッシュボード"
 ] as const;
 
 export function HomePage() {
@@ -78,6 +81,13 @@ export function HomePage() {
                   href="/shifts"
                 >
                   バイト管理へ
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 sm:w-auto"
+                  href="/dashboard"
+                >
+                  今日のダッシュボードへ
                   <ArrowRight className="size-4" />
                 </Link>
               </div>

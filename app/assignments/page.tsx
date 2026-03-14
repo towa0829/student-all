@@ -96,6 +96,7 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
                 {user.email} としてログイン中です。課題の作成、編集、削除、完了切り替えをこの画面で管理できます。
               </p>
               <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
+                <Link href="/dashboard">ダッシュボードへ</Link>
                 <Link href="/calendar">カレンダーへ</Link>
                 <Link href="/shifts">バイト管理へ</Link>
                 <Link href="/">ホームへ</Link>
@@ -241,6 +242,7 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
                 </Link>
               ) : (
                 <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-200">
+                  <Link href="/dashboard">ダッシュボードへ</Link>
                   <Link href="/calendar">カレンダーへ</Link>
                   <Link href="/shifts">バイト管理へ</Link>
                   <Link href="/">ホームに戻る</Link>

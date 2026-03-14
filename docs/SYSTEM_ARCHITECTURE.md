@@ -71,6 +71,8 @@ Database
 
 バイト管理では shifts を基に勤務時間と給料見込みをサーバー側で集計し，月間サマリーとして表示する．
 
+ダッシュボードでは当日データを classes、assignments、shifts、tasks から同時取得し，ユーザー向けに 1 画面で要約表示する．
+
 ---
 
 # Authentication Flow
