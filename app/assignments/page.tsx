@@ -81,12 +81,24 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
         .order("period", { ascending: true })
     ]);
 
-  if (assignmentsError || classesError) {
-    throw new Error("Failed to load assignments.");
+  const queryErrors = [
+    { error: assignmentsError, table: "assignments" },
+    { error: classesError, table: "classes" }
+  ].filter((item) => item.error);
+
+  if (queryErrors.length > 0) {
+    console.warn(
+      "Assignments query failed:",
+      queryErrors.map((item) => ({
+        code: item.error?.code,
+        message: item.error?.message,
+        table: item.table
+      }))
+    );
   }
 
-  const assignmentList = assignments ?? [];
-  const classList = classes ?? [];
+  const assignmentList = assignmentsError ? [] : (assignments ?? []);
+  const classList = classesError ? [] : (classes ?? []);
   const editingAssignment = assignmentList.find((assignment) => assignment.id === edit);
   const summary = getSummary(assignmentList);
 
@@ -103,6 +115,14 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
           signOutAction={signOutAction}
           title="課題管理"
         />
+
+        {queryErrors.length > 0 ? (
+          <Panel className="border-amber-200 bg-amber-50">
+            <p className="text-sm font-medium text-amber-800">
+              一部データの取得に失敗したため、表示可能な情報のみを表示しています。
+            </p>
+          </Panel>
+        ) : null}
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Panel className="space-y-2">

@@ -90,17 +90,36 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .order("due_date", { ascending: true })
   ]);
 
-  if (assignmentsResult.error || classesResult.error || shiftsResult.error || tasksResult.error) {
-    throw new Error("Failed to load calendar data.");
+  const queryErrors = [
+    { error: assignmentsResult.error, table: "assignments" },
+    { error: classesResult.error, table: "classes" },
+    { error: shiftsResult.error, table: "shifts" },
+    { error: tasksResult.error, table: "tasks" }
+  ].filter((item) => item.error);
+
+  if (queryErrors.length > 0) {
+    console.warn(
+      "Calendar query failed:",
+      queryErrors.map((item) => ({
+        code: item.error?.code,
+        message: item.error?.message,
+        table: item.table
+      }))
+    );
   }
 
   return (
     <CalendarPage
-      assignments={assignmentsResult.data ?? []}
-      classes={classesResult.data ?? []}
+      assignments={assignmentsResult.error ? [] : (assignmentsResult.data ?? [])}
+      classes={classesResult.error ? [] : (classesResult.data ?? [])}
       currentMonth={currentMonth}
-      shifts={shiftsResult.data ?? []}
-      tasks={tasksResult.data ?? []}
+      dataWarning={
+        queryErrors.length > 0
+          ? "一部データの取得に失敗したため、表示可能な情報のみを表示しています。"
+          : null
+      }
+      shifts={shiftsResult.error ? [] : (shiftsResult.data ?? [])}
+      tasks={tasksResult.error ? [] : (tasksResult.data ?? [])}
       userEmail={user.email ?? null}
     />
   );

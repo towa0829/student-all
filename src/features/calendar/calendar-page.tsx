@@ -22,6 +22,7 @@ type CalendarPageProps = {
   assignments: AssignmentRecord[];
   classes: ClassRecord[];
   currentMonth: Date;
+  dataWarning?: string | null;
   shifts: ShiftRecord[];
   tasks: TaskRecord[];
   userEmail: string | null;
@@ -178,6 +179,7 @@ export function CalendarPage({
   assignments,
   classes,
   currentMonth,
+  dataWarning,
   shifts,
   tasks,
   userEmail
@@ -203,6 +205,12 @@ export function CalendarPage({
           signOutAction={signOutAction}
           title="カレンダー"
         />
+
+        {dataWarning ? (
+          <Panel className="border-amber-200 bg-amber-50">
+            <p className="text-sm font-medium text-amber-800">{dataWarning}</p>
+          </Panel>
+        ) : null}
 
         <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
           <Panel className="space-y-6 border-slate-200 bg-white">

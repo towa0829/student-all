@@ -64,10 +64,14 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     .order("created_at", { ascending: true });
 
   if (error) {
-    throw new Error("Failed to load tasks.");
+    console.warn("Tasks query failed:", {
+      code: error.code,
+      message: error.message,
+      table: "tasks"
+    });
   }
 
-  const taskList = tasks ?? [];
+  const taskList = error ? [] : (tasks ?? []);
   const editingTask = taskList.find((task) => task.id === edit);
   const summary = getSummary(taskList);
 
@@ -84,6 +88,14 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
           signOutAction={signOutAction}
           title="タスク管理"
         />
+
+        {error ? (
+          <Panel className="border-amber-200 bg-amber-50">
+            <p className="text-sm font-medium text-amber-800">
+              タスクデータの取得に失敗したため、表示可能な情報のみを表示しています。
+            </p>
+          </Panel>
+        ) : null}
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Panel className="space-y-2">

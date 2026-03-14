@@ -52,10 +52,14 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
     .order("period", { ascending: true });
 
   if (error) {
-    throw new Error("Failed to load classes.");
+    console.warn("Classes query failed:", {
+      code: error.code,
+      message: error.message,
+      table: "classes"
+    });
   }
 
-  const classList = classes ?? [];
+  const classList = error ? [] : (classes ?? []);
   const editingClass = classList.find((schoolClass) => schoolClass.id === edit);
 
   return (
@@ -71,6 +75,14 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
           signOutAction={signOutAction}
           title="授業管理"
         />
+
+        {error ? (
+          <Panel className="border-amber-200 bg-amber-50">
+            <p className="text-sm font-medium text-amber-800">
+              授業データの取得に失敗したため、表示可能な情報のみを表示しています。
+            </p>
+          </Panel>
+        ) : null}
 
         <section className="grid gap-6 md:grid-cols-3">
           <Panel className="space-y-2">

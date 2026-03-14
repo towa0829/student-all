@@ -88,7 +88,7 @@ export default async function DashboardPage() {
   ].filter((item) => item.error);
 
   if (queryErrors.length > 0) {
-    console.error(
+    console.warn(
       "Dashboard query failed:",
       queryErrors.map((item) => ({
         code: item.error?.code,

@@ -35,6 +35,7 @@ Student's All は、授業・課題・予定・バイトシフト・給料・タ
 - classes テーブルの CRUD 実装
 - tasks テーブルの CRUD 実装
 - classes / tasks の画面追加と protected route 拡張
+- 各管理画面でデータ取得失敗時の部分表示フォールバックを追加
 
 次の Step では UI 改善、テスト、デプロイ準備に進みます。
 
