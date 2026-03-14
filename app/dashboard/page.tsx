@@ -80,14 +80,28 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: true })
   ]);
 
-  if (classesResult.error || assignmentsResult.error || shiftsResult.error || tasksResult.error) {
-    throw new Error("Failed to load dashboard data.");
+  const queryErrors = [
+    { error: classesResult.error, table: "classes" },
+    { error: assignmentsResult.error, table: "assignments" },
+    { error: shiftsResult.error, table: "shifts" },
+    { error: tasksResult.error, table: "tasks" }
+  ].filter((item) => item.error);
+
+  if (queryErrors.length > 0) {
+    console.error(
+      "Dashboard query failed:",
+      queryErrors.map((item) => ({
+        code: item.error?.code,
+        message: item.error?.message,
+        table: item.table
+      }))
+    );
   }
 
-  const classes = classesResult.data ?? [];
-  const assignments = assignmentsResult.data ?? [];
-  const shifts = shiftsResult.data ?? [];
-  const tasks = tasksResult.data ?? [];
+  const classes = classesResult.error ? [] : (classesResult.data ?? []);
+  const assignments = assignmentsResult.error ? [] : (assignmentsResult.data ?? []);
+  const shifts = shiftsResult.error ? [] : (shiftsResult.data ?? []);
+  const tasks = tasksResult.error ? [] : (tasksResult.data ?? []);
 
   const todayShiftPay = shifts.reduce((acc, shift) => {
     return acc + getShiftDurationHours(shift.start_time, shift.end_time) * shift.hourly_wage;
@@ -109,6 +123,14 @@ export default async function DashboardPage() {
           signOutAction={signOutAction}
           title="今日の予定"
         />
+
+        {queryErrors.length > 0 ? (
+          <Panel className="border-amber-200 bg-amber-50">
+            <p className="text-sm font-medium text-amber-800">
+              一部データの取得に失敗したため、表示可能な情報のみを表示しています。詳細はサーバーログを確認してください。
+            </p>
+          </Panel>
+        ) : null}
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Panel className="space-y-2">
