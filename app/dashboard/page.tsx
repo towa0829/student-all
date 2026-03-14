@@ -1,11 +1,20 @@
 import Link from "next/link";
-import { CalendarDays, CheckCircle2, LogOut, School, Wallet } from "lucide-react";
+import { CalendarDays, CheckCircle2, School, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+
+const headerLinks = [
+  { href: "/assignments", label: "課題管理" },
+  { href: "/classes", label: "授業管理" },
+  { href: "/tasks", label: "タスク管理" },
+  { href: "/calendar", label: "カレンダー" },
+  { href: "/shifts", label: "バイト管理" },
+  { href: "/", label: "ホーム" }
+];
 
 function formatDateKey(date: Date) {
   const year = date.getFullYear();
@@ -91,36 +100,15 @@ export default async function DashboardPage() {
     <main className="relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.14),transparent_24%),linear-gradient(180deg,#effcf5_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
-        <header className="flex flex-col gap-5 rounded-4xl border border-white/70 bg-white/80 px-8 py-8 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] backdrop-blur md:flex-row md:items-start md:justify-between">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
-              <CalendarDays className="size-4" />
-              Daily Dashboard
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-slate-950 md:text-4xl">今日の予定</h1>
-              <p className="text-sm leading-7 text-slate-600 md:text-base">
-                {user.email} の {todayKey}（{weekdayLabel}）をまとめて表示しています。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
-              <Link href="/assignments">課題管理</Link>
-              <Link href="/classes">授業管理</Link>
-              <Link href="/tasks">タスク管理</Link>
-              <Link href="/calendar">カレンダー</Link>
-              <Link href="/shifts">バイト管理</Link>
-              <Link href="/">ホーム</Link>
-            </div>
-          </div>
-          <form action={signOutAction}>
-            <Button className="w-full md:w-auto" type="submit" variant="secondary">
-              <span className="inline-flex items-center gap-2">
-                <LogOut className="size-4" />
-                ログアウト
-              </span>
-            </Button>
-          </form>
-        </header>
+        <FeatureHeader
+          badgeClassName="bg-brand-50 text-brand-700"
+          badgeLabel="Daily Dashboard"
+          description={`${user.email} の ${todayKey}（${weekdayLabel}）をまとめて表示しています。`}
+          Icon={CalendarDays}
+          links={headerLinks}
+          signOutAction={signOutAction}
+          title="今日の予定"
+        />
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Panel className="space-y-2">

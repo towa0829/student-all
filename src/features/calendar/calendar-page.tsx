@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, LogOut } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 
 import { signOutAction } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import type { Database } from "@/types/supabase";
 
@@ -35,6 +35,15 @@ const eventStyle: Record<CalendarEvent["type"], string> = {
   shift: "border-emerald-200 bg-emerald-50 text-emerald-800",
   task: "border-violet-200 bg-violet-50 text-violet-800"
 };
+
+const headerLinks = [
+  { href: "/dashboard", label: "ダッシュボードへ" },
+  { href: "/assignments", label: "課題管理へ" },
+  { href: "/classes", label: "授業管理へ" },
+  { href: "/tasks", label: "タスク管理へ" },
+  { href: "/shifts", label: "バイト管理へ" },
+  { href: "/", label: "ホームへ" }
+];
 
 function formatDateKey(date: Date) {
   const year = date.getFullYear();
@@ -185,36 +194,15 @@ export function CalendarPage({
     <main className="relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_25%),linear-gradient(180deg,#effcf5_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
-        <header className="flex flex-col gap-5 rounded-4xl border border-white/70 bg-white/80 px-8 py-8 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] backdrop-blur md:flex-row md:items-start md:justify-between">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">
-              <CalendarDays className="size-4" />
-              Calendar Overview
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-slate-950 md:text-4xl">カレンダー</h1>
-              <p className="text-sm leading-7 text-slate-600 md:text-base">
-                {userEmail} の授業、課題、シフト、タスクを月間ビューで確認できます。
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
-              <Link href="/dashboard">ダッシュボードへ</Link>
-              <Link href="/assignments">課題管理へ</Link>
-              <Link href="/classes">授業管理へ</Link>
-              <Link href="/tasks">タスク管理へ</Link>
-              <Link href="/shifts">バイト管理へ</Link>
-              <Link href="/">ホームへ</Link>
-            </div>
-          </div>
-          <form action={signOutAction}>
-            <Button className="w-full md:w-auto" type="submit" variant="secondary">
-              <span className="inline-flex items-center gap-2">
-                <LogOut className="size-4" />
-                ログアウト
-              </span>
-            </Button>
-          </form>
-        </header>
+        <FeatureHeader
+          badgeClassName="bg-brand-50 text-brand-700"
+          badgeLabel="Calendar Overview"
+          description={`${userEmail} の授業、課題、シフト、タスクを月間ビューで確認できます。`}
+          Icon={CalendarDays}
+          links={headerLinks}
+          signOutAction={signOutAction}
+          title="カレンダー"
+        />
 
         <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
           <Panel className="space-y-6 border-slate-200 bg-white">

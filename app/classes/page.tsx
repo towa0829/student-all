@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BookOpen, LogOut, PlusCircle } from "lucide-react";
+import { BookOpen, PlusCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
 import { createClassAction, deleteClassAction, updateClassAction } from "@/actions/classes";
 import { Button } from "@/components/ui/button";
+import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import { ClassForm } from "@/features/classes/class-form";
 import { dayOptions } from "@/features/classes/types";
@@ -23,6 +24,14 @@ type ClassesPageProps = {
     edit?: string;
   }>;
 };
+
+const headerLinks = [
+  { href: "/dashboard", label: "ダッシュボードへ" },
+  { href: "/calendar", label: "カレンダーへ" },
+  { href: "/assignments", label: "課題管理へ" },
+  { href: "/tasks", label: "タスク管理へ" },
+  { href: "/", label: "ホームへ" }
+];
 
 export default async function ClassesPage({ searchParams }: ClassesPageProps) {
   const { edit } = await searchParams;
@@ -53,35 +62,15 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
     <main className="relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.18),transparent_30%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.12),transparent_24%),linear-gradient(180deg,#f0f9ff_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
-        <header className="flex flex-col gap-5 rounded-4xl border border-white/70 bg-white/80 px-8 py-8 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] backdrop-blur md:flex-row md:items-start md:justify-between">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">
-              <BookOpen className="size-4" />
-              Class Planner
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-slate-950 md:text-4xl">授業管理</h1>
-              <p className="text-sm leading-7 text-slate-600 md:text-base">
-                {user.email} の授業時間割を管理します。授業は曜日・時限順で表示されます。
-              </p>
-              <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
-                <Link href="/dashboard">ダッシュボードへ</Link>
-                <Link href="/calendar">カレンダーへ</Link>
-                <Link href="/assignments">課題管理へ</Link>
-                <Link href="/tasks">タスク管理へ</Link>
-                <Link href="/">ホームへ</Link>
-              </div>
-            </div>
-          </div>
-          <form action={signOutAction}>
-            <Button className="w-full md:w-auto" type="submit" variant="secondary">
-              <span className="inline-flex items-center gap-2">
-                <LogOut className="size-4" />
-                ログアウト
-              </span>
-            </Button>
-          </form>
-        </header>
+        <FeatureHeader
+          badgeClassName="bg-sky-50 text-sky-700"
+          badgeLabel="Class Planner"
+          description={`${user.email} の授業時間割を管理します。授業は曜日・時限順で表示されます。`}
+          Icon={BookOpen}
+          links={headerLinks}
+          signOutAction={signOutAction}
+          title="授業管理"
+        />
 
         <section className="grid gap-6 md:grid-cols-3">
           <Panel className="space-y-2">

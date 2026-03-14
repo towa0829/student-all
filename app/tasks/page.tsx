@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckSquare, LogOut, PlusCircle } from "lucide-react";
+import { CheckSquare, PlusCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -10,6 +10,7 @@ import {
   updateTaskAction
 } from "@/actions/tasks";
 import { Button } from "@/components/ui/button";
+import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import { TaskForm } from "@/features/tasks/task-form";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -25,6 +26,14 @@ type TasksPageProps = {
     edit?: string;
   }>;
 };
+
+const headerLinks = [
+  { href: "/dashboard", label: "ダッシュボードへ" },
+  { href: "/calendar", label: "カレンダーへ" },
+  { href: "/assignments", label: "課題管理へ" },
+  { href: "/classes", label: "授業管理へ" },
+  { href: "/", label: "ホームへ" }
+];
 
 function getSummary(tasks: Array<{ status: "pending" | "completed"; due_date: string | null }>) {
   const total = tasks.length;
@@ -66,35 +75,15 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     <main className="relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.2),transparent_30%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_24%),linear-gradient(180deg,#f5f3ff_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
-        <header className="flex flex-col gap-5 rounded-4xl border border-white/70 bg-white/80 px-8 py-8 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] backdrop-blur md:flex-row md:items-start md:justify-between">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-violet-700">
-              <CheckSquare className="size-4" />
-              Task Tracker
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-slate-950 md:text-4xl">タスク管理</h1>
-              <p className="text-sm leading-7 text-slate-600 md:text-base">
-                {user.email} の自由タスクを管理します。締切なしタスクも登録可能です。
-              </p>
-              <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
-                <Link href="/dashboard">ダッシュボードへ</Link>
-                <Link href="/calendar">カレンダーへ</Link>
-                <Link href="/assignments">課題管理へ</Link>
-                <Link href="/classes">授業管理へ</Link>
-                <Link href="/">ホームへ</Link>
-              </div>
-            </div>
-          </div>
-          <form action={signOutAction}>
-            <Button className="w-full md:w-auto" type="submit" variant="secondary">
-              <span className="inline-flex items-center gap-2">
-                <LogOut className="size-4" />
-                ログアウト
-              </span>
-            </Button>
-          </form>
-        </header>
+        <FeatureHeader
+          badgeClassName="bg-violet-50 text-violet-700"
+          badgeLabel="Task Tracker"
+          description={`${user.email} の自由タスクを管理します。締切なしタスクも登録可能です。`}
+          Icon={CheckSquare}
+          links={headerLinks}
+          signOutAction={signOutAction}
+          title="タスク管理"
+        />
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Panel className="space-y-2">
