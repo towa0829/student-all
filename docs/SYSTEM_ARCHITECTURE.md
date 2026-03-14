@@ -34,7 +34,7 @@ Next.js App Routerを使用．
 役割
 
 * UI表示
-* API呼び出し
+* Server Actions 呼び出し
 * 状態管理
 
 ---
@@ -74,12 +74,28 @@ Database
 ```
 User Login
    ↓
+Server Action
+   ↓
 Supabase Auth
    ↓
 JWT発行
    ↓
-Session管理
+middleware で Session 管理
+   ↓
+Protected Route Access
 ```
+
+---
+
+# App Integration
+
+アプリ側では用途ごとに Supabase クライアントを分離する．
+
+* Browser Client
+* Server Client
+* Middleware Client
+
+これにより App Router の Server Actions と認証セッション更新を安全に扱う．
 
 ---
 

@@ -2,9 +2,16 @@
 
 # API Specification
 
+このプロジェクトでは Server Actions を優先するが，外部連携や将来の拡張用に Route Handler ベースの API 仕様も整理する．
+
 ---
 
 # Assignments
+
+実装方針
+
+* UI からは Server Actions を優先使用
+* API Route は将来の外部連携用に維持
 
 ## Create Assignment
 
@@ -56,6 +63,16 @@ PATCH
 
 ```
 /api/assignments/:id
+```
+
+更新対象
+
+```
+title
+due_date
+class_id
+memo
+status
 ```
 
 ---

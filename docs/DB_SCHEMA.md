@@ -9,11 +9,10 @@
 ```
 id
 email
-password
 created_at
 ```
 
-ユーザー情報を管理．
+Supabase Auth の auth.users をベースに管理．
 
 ---
 
@@ -28,7 +27,7 @@ name
 day_of_week
 period
 room
-memo
+created_at
 ```
 
 ---
@@ -68,6 +67,7 @@ date
 start_time
 end_time
 hourly_wage
+created_at
 ```
 
 給料計算
@@ -88,6 +88,7 @@ user_id
 title
 due_date
 status
+created_at
 ```
 
 ---

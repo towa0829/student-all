@@ -2,7 +2,7 @@
 
 # Student's All
 
-学生生活を一つのアプリで管理するWebアプリ．
+学生生活を一つのアプリで管理する Web アプリ．
 
 管理できる内容
 
@@ -21,8 +21,9 @@
 
 Frontend
 
-* Next.js
+* Next.js (App Router)
 * React
+* TypeScript
 * TailwindCSS
 
 Backend
@@ -68,8 +69,6 @@ Auth
 # Setup
 
 ```bash
-git clone https://github.com/yourname/student-life-manager
-cd student-life-manager
 npm install
 npm run dev
 ```
@@ -87,15 +86,46 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
 # Folder Structure
 
+```text
+.
+├ app
+│ ├ assignments
+│ ├ login
+│ ├ globals.css
+│ ├ layout.tsx
+│ └ page.tsx
+├ docs
+├ supabase
+├ public
+└ src
+	├ actions
+	├ components
+	│ ├ layout
+	│ └ ui
+	├ features
+	│ └ home
+	├ lib
+	└ types
 ```
-src
- ├ app
- ├ components
- ├ lib
- ├ hooks
- ├ types
- └ utils
-```
+
+---
+
+# Current Progress
+
+Step 4 完了
+
+* プロジェクト構造の整理
+* ホーム画面の実装
+* 再利用 UI コンポーネント追加
+* 型定義追加
+* Supabase クライアント基盤追加
+* Supabase SSR 構成追加
+* middleware 追加
+* SQL スキーマとセットアップ手順追加
+* ログイン、サインアップ、ログアウト追加
+* 認証保護ページ追加
+* 課題 CRUD 追加
+* 完了切り替え追加
 
 ---
 
