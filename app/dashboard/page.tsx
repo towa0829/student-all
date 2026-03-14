@@ -1,20 +1,11 @@
 import Link from "next/link";
-import { CalendarDays, CheckCircle2, School, Wallet } from "lucide-react";
+import { CheckCircle2, School, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
 import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-
-const headerLinks = [
-  { href: "/assignments", label: "課題管理" },
-  { href: "/classes", label: "授業管理" },
-  { href: "/tasks", label: "タスク管理" },
-  { href: "/calendar", label: "カレンダー" },
-  { href: "/shifts", label: "バイト管理" },
-  { href: "/", label: "ホーム" }
-];
 
 function formatDateKey(date: Date) {
   const year = date.getFullYear();
@@ -37,13 +28,10 @@ const currencyFormatter = new Intl.NumberFormat("ja-JP", {
   maximumFractionDigits: 0
 });
 
-const dayLabelMap = ["日", "月", "火", "水", "木", "金", "土"] as const;
-
 export default async function DashboardPage() {
   const now = new Date();
   const todayKey = formatDateKey(now);
   const weekday = now.getDay();
-  const weekdayLabel = dayLabelMap[weekday];
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
@@ -115,13 +103,8 @@ export default async function DashboardPage() {
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.16),transparent_30%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.14),transparent_24%),linear-gradient(180deg,#effcf5_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
-          badgeClassName="bg-brand-50 text-brand-700"
-          badgeLabel="Daily Dashboard"
-          description={`${user.email} の ${todayKey}（${weekdayLabel}）をまとめて表示しています。`}
-          Icon={CalendarDays}
-          links={headerLinks}
           signOutAction={signOutAction}
-          title="今日の予定"
+          userLabel={user.email ?? "ユーザー"}
         />
 
         {queryErrors.length > 0 ? (

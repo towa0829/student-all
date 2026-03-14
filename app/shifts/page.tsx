@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CalendarClock, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -23,15 +22,6 @@ type ShiftsPageProps = {
     month?: string;
   }>;
 };
-
-const headerLinks = [
-  { href: "/dashboard", label: "ダッシュボードへ" },
-  { href: "/calendar", label: "カレンダーへ" },
-  { href: "/assignments", label: "課題管理へ" },
-  { href: "/classes", label: "授業管理へ" },
-  { href: "/tasks", label: "タスク管理へ" },
-  { href: "/", label: "ホームへ" }
-];
 
 function parseMonthParam(month?: string) {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
@@ -133,13 +123,8 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_30%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_24%),linear-gradient(180deg,#ecfdf5_0%,#f8fafc_54%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
-          badgeClassName="bg-emerald-50 text-emerald-700"
-          badgeLabel="Shift & Wage"
-          description={`${user.email} のシフトを月単位で管理し、勤務時間と給料見込みを自動計算します。`}
-          Icon={Wallet}
-          links={headerLinks}
           signOutAction={signOutAction}
-          title="バイト管理"
+          userLabel={user.email ?? "ユーザー"}
         />
 
         {error ? (
@@ -243,28 +228,11 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
               title={editingShift ? "シフトを編集" : "新規シフトを作成"}
             />
 
-            <Panel className="space-y-4 bg-slate-950 text-slate-50">
-              <div className="inline-flex rounded-2xl bg-white/10 p-3 text-emerald-300">
-                <CalendarClock className="size-5" />
-              </div>
-              <h2 className="text-xl font-semibold">計算ルール</h2>
-              <ul className="space-y-3 text-sm leading-7 text-slate-300">
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  勤務時間 = 終了時刻 - 開始時刻
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  見込み給料 = 勤務時間 × 時給
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  ユーザー単位の RLS で他ユーザーのデータにはアクセスできません
-                </li>
-              </ul>
-              {editingShift ? (
-                <Link className="inline-flex text-sm font-semibold text-emerald-200" href="/shifts">
-                  編集をキャンセル
-                </Link>
-              ) : null}
-            </Panel>
+            {editingShift ? (
+              <Link className="inline-flex text-sm font-semibold text-emerald-700" href="/shifts">
+                編集をキャンセル
+              </Link>
+            ) : null}
           </div>
         </section>
       </div>

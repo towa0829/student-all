@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { signOutAction } from "@/actions/auth";
 import { FeatureHeader } from "@/components/layout/feature-header";
@@ -36,15 +36,6 @@ const eventStyle: Record<CalendarEvent["type"], string> = {
   shift: "border-emerald-200 bg-emerald-50 text-emerald-800",
   task: "border-violet-200 bg-violet-50 text-violet-800"
 };
-
-const headerLinks = [
-  { href: "/dashboard", label: "ダッシュボードへ" },
-  { href: "/assignments", label: "課題管理へ" },
-  { href: "/classes", label: "授業管理へ" },
-  { href: "/tasks", label: "タスク管理へ" },
-  { href: "/shifts", label: "バイト管理へ" },
-  { href: "/", label: "ホームへ" }
-];
 
 function formatDateKey(date: Date) {
   const year = date.getFullYear();
@@ -162,19 +153,6 @@ function createMonthLink(currentMonth: Date, offset: number) {
   return `/calendar?month=${next.getFullYear()}-${month}`;
 }
 
-function getMonthSummary(
-  assignments: AssignmentRecord[],
-  shifts: ShiftRecord[],
-  tasks: TaskRecord[]
-) {
-  return {
-    assignments: assignments.length,
-    completedAssignments: assignments.filter((item) => item.status === "completed").length,
-    shifts: shifts.length,
-    tasks: tasks.length
-  };
-}
-
 export function CalendarPage({
   assignments,
   classes,
@@ -190,20 +168,14 @@ export function CalendarPage({
     year: "numeric",
     month: "long"
   });
-  const summary = getMonthSummary(assignments, shifts, tasks);
 
   return (
     <main className="relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_25%),linear-gradient(180deg,#effcf5_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
-          badgeClassName="bg-brand-50 text-brand-700"
-          badgeLabel="Calendar Overview"
-          description={`${userEmail} の授業、課題、シフト、タスクを月間ビューで確認できます。`}
-          Icon={CalendarDays}
-          links={headerLinks}
           signOutAction={signOutAction}
-          title="カレンダー"
+          userLabel={userEmail ?? "ユーザー"}
         />
 
         {dataWarning ? (
@@ -212,7 +184,7 @@ export function CalendarPage({
           </Panel>
         ) : null}
 
-        <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="grid gap-6">
           <Panel className="space-y-6 border-slate-200 bg-white">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -289,49 +261,6 @@ export function CalendarPage({
               })}
             </div>
           </Panel>
-
-          <div className="space-y-6">
-            <Panel className="space-y-4 bg-slate-950 text-slate-50">
-              <h2 className="text-xl font-semibold">月間サマリー</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-                  <p className="text-sm text-slate-300">課題</p>
-                  <p className="mt-2 text-3xl font-bold">{summary.assignments}</p>
-                  <p className="mt-2 text-xs text-slate-400">完了済み {summary.completedAssignments} 件</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-                  <p className="text-sm text-slate-300">シフト</p>
-                  <p className="mt-2 text-3xl font-bold">{summary.shifts}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-                  <p className="text-sm text-slate-300">タスク</p>
-                  <p className="mt-2 text-3xl font-bold">{summary.tasks}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
-                  <p className="text-sm text-slate-300">固定授業</p>
-                  <p className="mt-2 text-3xl font-bold">{classes.length}</p>
-                </div>
-              </div>
-            </Panel>
-
-            <Panel className="space-y-4">
-              <div className="inline-flex rounded-2xl bg-brand-50 p-3 text-brand-700">
-                <Clock3 className="size-5" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-slate-950">表示ルール</h2>
-                <p className="text-sm leading-7 text-slate-600">
-                  classes は day_of_week と period から毎週の授業として展開し、assignments、shifts、tasks は保存済みの日付をそのまま表示しています。
-                </p>
-              </div>
-              <ul className="space-y-3 text-sm leading-7 text-slate-600">
-                <li className="rounded-2xl bg-slate-50 px-4 py-3">授業: 曜日と時限、教室を表示</li>
-                <li className="rounded-2xl bg-slate-50 px-4 py-3">課題: 締切日ベースで表示</li>
-                <li className="rounded-2xl bg-slate-50 px-4 py-3">シフト: 勤務時間を表示</li>
-                <li className="rounded-2xl bg-slate-50 px-4 py-3">タスク: due_date があるものだけ表示</li>
-              </ul>
-            </Panel>
-          </div>
         </section>
       </div>
     </main>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -24,14 +24,6 @@ type ClassesPageProps = {
     edit?: string;
   }>;
 };
-
-const headerLinks = [
-  { href: "/dashboard", label: "ダッシュボードへ" },
-  { href: "/calendar", label: "カレンダーへ" },
-  { href: "/assignments", label: "課題管理へ" },
-  { href: "/tasks", label: "タスク管理へ" },
-  { href: "/", label: "ホームへ" }
-];
 
 export default async function ClassesPage({ searchParams }: ClassesPageProps) {
   const { edit } = await searchParams;
@@ -67,13 +59,8 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.18),transparent_30%),radial-gradient(circle_at_top_right,rgba(16,185,129,0.12),transparent_24%),linear-gradient(180deg,#f0f9ff_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
-          badgeClassName="bg-sky-50 text-sky-700"
-          badgeLabel="Class Planner"
-          description={`${user.email} の授業時間割を管理します。授業は曜日・時限順で表示されます。`}
-          Icon={BookOpen}
-          links={headerLinks}
           signOutAction={signOutAction}
-          title="授業管理"
+          userLabel={user.email ?? "ユーザー"}
         />
 
         {error ? (
@@ -158,25 +145,11 @@ export default async function ClassesPage({ searchParams }: ClassesPageProps) {
               title={editingClass ? "授業を編集" : "新規授業を作成"}
             />
 
-            <Panel className="space-y-4 bg-slate-950 text-slate-50">
-              <h2 className="text-xl font-semibold">運用メモ</h2>
-              <ul className="space-y-3 text-sm leading-7 text-slate-300">
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  授業は曜日と時限でソートされます。
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  課題管理で授業との関連付けに利用されます。
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  更新内容はカレンダー・ダッシュボードに即時反映されます。
-                </li>
-              </ul>
-              {editingClass ? (
-                <Link className="inline-flex text-sm font-semibold text-sky-200" href="/classes">
-                  編集をキャンセル
-                </Link>
-              ) : null}
-            </Panel>
+            {editingClass ? (
+              <Link className="inline-flex text-sm font-semibold text-sky-700" href="/classes">
+                編集をキャンセル
+              </Link>
+            ) : null}
           </div>
         </section>
       </div>

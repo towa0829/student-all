@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckSquare, PlusCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -26,14 +26,6 @@ type TasksPageProps = {
     edit?: string;
   }>;
 };
-
-const headerLinks = [
-  { href: "/dashboard", label: "ダッシュボードへ" },
-  { href: "/calendar", label: "カレンダーへ" },
-  { href: "/assignments", label: "課題管理へ" },
-  { href: "/classes", label: "授業管理へ" },
-  { href: "/", label: "ホームへ" }
-];
 
 function getSummary(tasks: Array<{ status: "pending" | "completed"; due_date: string | null }>) {
   const total = tasks.length;
@@ -80,13 +72,8 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.2),transparent_30%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_24%),linear-gradient(180deg,#f5f3ff_0%,#f8fafc_56%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
-          badgeClassName="bg-violet-50 text-violet-700"
-          badgeLabel="Task Tracker"
-          description={`${user.email} の自由タスクを管理します。締切なしタスクも登録可能です。`}
-          Icon={CheckSquare}
-          links={headerLinks}
           signOutAction={signOutAction}
-          title="タスク管理"
+          userLabel={user.email ?? "ユーザー"}
         />
 
         {error ? (
@@ -192,25 +179,11 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
               title={editingTask ? "タスクを編集" : "新規タスクを作成"}
             />
 
-            <Panel className="space-y-4 bg-slate-950 text-slate-50">
-              <h2 className="text-xl font-semibold">運用メモ</h2>
-              <ul className="space-y-3 text-sm leading-7 text-slate-300">
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  締切ありタスクが上に表示され、締切日でソートされます。
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  完了切り替えは Server Actions で即時反映されます。
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  期限が今日のタスクはダッシュボードとカレンダーにも表示されます。
-                </li>
-              </ul>
-              {editingTask ? (
-                <Link className="inline-flex text-sm font-semibold text-violet-200" href="/tasks">
-                  編集をキャンセル
-                </Link>
-              ) : null}
-            </Panel>
+            {editingTask ? (
+              <Link className="inline-flex text-sm font-semibold text-violet-700" href="/tasks">
+                編集をキャンセル
+              </Link>
+            ) : null}
           </div>
         </section>
       </div>

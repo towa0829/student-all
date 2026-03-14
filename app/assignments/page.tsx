@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpenCheck, CalendarClock, CheckCircle2, PlusCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, PlusCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import {
@@ -27,15 +27,6 @@ type AssignmentsPageProps = {
     edit?: string;
   }>;
 };
-
-const headerLinks = [
-  { href: "/dashboard", label: "ダッシュボードへ" },
-  { href: "/calendar", label: "カレンダーへ" },
-  { href: "/shifts", label: "バイト管理へ" },
-  { href: "/classes", label: "授業管理へ" },
-  { href: "/tasks", label: "タスク管理へ" },
-  { href: "/", label: "ホームへ" }
-];
 
 function getClassLabel(classes: ClassRecord[], classId: string | null) {
   if (!classId) {
@@ -107,13 +98,8 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
       <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.18),transparent_28%),linear-gradient(180deg,#f4fbf8_0%,#f8fafc_46%,#eef2ff_100%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
-          badgeClassName="bg-brand-50 text-brand-700"
-          badgeLabel="Assignment Manager"
-          description={`${user.email} としてログイン中です。課題の作成、編集、削除、完了切り替えをこの画面で管理できます。`}
-          Icon={BookOpenCheck}
-          links={headerLinks}
           signOutAction={signOutAction}
-          title="課題管理"
+          userLabel={user.email ?? "ユーザー"}
         />
 
         {queryErrors.length > 0 ? (
@@ -234,34 +220,11 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
               title={editingAssignment ? "課題を編集" : "新規課題を作成"}
             />
 
-            <Panel className="space-y-4 bg-slate-950 text-slate-50">
-              <h2 className="text-xl font-semibold">運用メモ</h2>
-              <ul className="space-y-3 text-sm leading-7 text-slate-300">
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  課題は締切日の昇順で表示されます。
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  すべての操作は Server Actions 経由で実行されます。
-                </li>
-                <li className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  データは user_id と RLS によりログインユーザー単位で分離されます。
-                </li>
-              </ul>
-              {editingAssignment ? (
-                <Link className="inline-flex text-sm font-semibold text-brand-200" href="/assignments">
-                  編集をキャンセル
-                </Link>
-              ) : (
-                <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-200">
-                  <Link href="/dashboard">ダッシュボードへ</Link>
-                  <Link href="/calendar">カレンダーへ</Link>
-                  <Link href="/shifts">バイト管理へ</Link>
-                  <Link href="/classes">授業管理へ</Link>
-                  <Link href="/tasks">タスク管理へ</Link>
-                  <Link href="/">ホームに戻る</Link>
-                </div>
-              )}
-            </Panel>
+            {editingAssignment ? (
+              <Link className="inline-flex text-sm font-semibold text-brand-700" href="/assignments">
+                編集をキャンセル
+              </Link>
+            ) : null}
           </div>
         </section>
       </div>
