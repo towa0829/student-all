@@ -108,6 +108,33 @@ Body
 }
 ```
 
+## Update Shift
+
+PATCH
+
+```
+/api/shifts/:id
+```
+
+Body
+
+```
+{
+ date
+ start_time
+ end_time
+ hourly_wage
+}
+```
+
+## Delete Shift
+
+DELETE
+
+```
+/api/shifts/:id
+```
+
 ---
 
 # Calendar

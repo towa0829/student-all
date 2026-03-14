@@ -199,6 +199,7 @@ export function CalendarPage({
             </div>
             <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
               <Link href="/assignments">課題管理へ</Link>
+              <Link href="/shifts">バイト管理へ</Link>
               <Link href="/">ホームへ</Link>
             </div>
           </div>

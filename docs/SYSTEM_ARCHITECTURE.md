@@ -69,6 +69,8 @@ Database
 
 カレンダー表示では classes の繰り返し授業情報と assignments、shifts、tasks の日付データをサーバー側で集約してから UI に渡す．
 
+バイト管理では shifts を基に勤務時間と給料見込みをサーバー側で集計し，月間サマリーとして表示する．
+
 ---
 
 # Authentication Flow

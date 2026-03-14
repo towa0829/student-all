@@ -73,6 +73,13 @@ export function HomePage() {
                   月間カレンダーを見る
                   <ArrowRight className="size-4" />
                 </Link>
+                <Link
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+                  href="/shifts"
+                >
+                  バイト管理へ
+                  <ArrowRight className="size-4" />
+                </Link>
               </div>
             </div>
             <Panel className="grid gap-5 bg-slate-950 text-slate-50">

@@ -97,6 +97,7 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
               </p>
               <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-700">
                 <Link href="/calendar">カレンダーへ</Link>
+                <Link href="/shifts">バイト管理へ</Link>
                 <Link href="/">ホームへ</Link>
               </div>
             </div>
@@ -241,6 +242,7 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
               ) : (
                 <div className="flex flex-wrap gap-3 text-sm font-semibold text-brand-200">
                   <Link href="/calendar">カレンダーへ</Link>
+                  <Link href="/shifts">バイト管理へ</Link>
                   <Link href="/">ホームに戻る</Link>
                 </div>
               )}
