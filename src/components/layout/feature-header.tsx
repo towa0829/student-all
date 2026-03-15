@@ -22,7 +22,6 @@ const defaultHeaderLinks: HeaderLink[] = [
   { href: "/dashboard", label: "ダッシュボード" },
   { href: "/calendar", label: "カレンダー" },
   { href: "/assignments", label: "課題管理" },
-  { href: "/classes", label: "授業管理" },
   { href: "/tasks", label: "タスク管理" },
   { href: "/shifts", label: "バイト管理" }
 ];

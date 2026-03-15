@@ -14,7 +14,7 @@ import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import { AssignmentForm } from "@/features/assignments/assignment-form";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import type { AssignmentRecord, ClassRecord } from "@/features/assignments/types";
+import type { AssignmentRecord } from "@/features/assignments/types";
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   month: "short",
@@ -27,14 +27,6 @@ type AssignmentsPageProps = {
     edit?: string;
   }>;
 };
-
-function getClassLabel(classes: ClassRecord[], classId: string | null) {
-  if (!classId) {
-    return "授業未設定";
-  }
-
-  return classes.find((schoolClass) => schoolClass.id === classId)?.name ?? "授業未設定";
-}
 
 function getSummary(assignments: AssignmentRecord[]) {
   const total = assignments.length;
@@ -57,25 +49,13 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
     redirect("/login");
   }
 
-  const [{ data: assignments, error: assignmentsError }, { data: classes, error: classesError }] =
-    await Promise.all([
-      supabase
-        .from("assignments")
-        .select("id, user_id, class_id, title, due_date, status, memo, created_at")
-        .eq("user_id", user.id)
-        .order("due_date", { ascending: true }),
-      supabase
-        .from("classes")
-        .select("id, user_id, name, day_of_week, period, room, created_at")
-        .eq("user_id", user.id)
-        .order("day_of_week", { ascending: true })
-        .order("period", { ascending: true })
-    ]);
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from("assignments")
+    .select("id, user_id, class_id, title, due_date, status, memo, created_at")
+    .eq("user_id", user.id)
+    .order("due_date", { ascending: true });
 
-  const queryErrors = [
-    { error: assignmentsError, table: "assignments" },
-    { error: classesError, table: "classes" }
-  ].filter((item) => item.error);
+  const queryErrors = [{ error: assignmentsError, table: "assignments" }].filter((item) => item.error);
 
   if (queryErrors.length > 0) {
     console.warn(
@@ -89,7 +69,6 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
   }
 
   const assignmentList = assignmentsError ? [] : (assignments ?? []);
-  const classList = classesError ? [] : (classes ?? []);
   const editingAssignment = assignmentList.find((assignment) => assignment.id === edit);
   const summary = getSummary(assignmentList);
 
@@ -158,9 +137,6 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
                         >
                           {assignment.status === "completed" ? "完了" : "未完了"}
                         </span>
-                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                          {getClassLabel(classList, assignment.class_id)}
-                        </span>
                       </div>
                       <div>
                         <h2 className="text-2xl font-semibold text-slate-950">{assignment.title}</h2>
@@ -208,11 +184,10 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
           <div className="space-y-4">
             <AssignmentForm
               action={editingAssignment ? updateAssignmentAction : createAssignmentAction}
-              classes={classList}
               description={
                 editingAssignment
                   ? "内容を更新すると一覧へ反映されます。完了状態は左側のボタンから切り替えます。"
-                  : "課題名、締切日、授業、メモを登録できます。授業は未設定のままでも保存できます。"
+                  : "課題名、締切日、メモを登録できます。"
               }
               initialAssignment={editingAssignment}
               pendingLabel={editingAssignment ? "更新中..." : "作成中..."}

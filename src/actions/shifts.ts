@@ -58,13 +58,15 @@ function getShiftPayload(formData: FormData) {
   const endTime = formData.get("endTime");
   const hourlyWage = formData.get("hourlyWage");
   const jobTypeId = formData.get("jobTypeId");
+  const jobTypeFeatureEnabled = formData.get("jobTypeFeatureEnabled");
 
   if (
     typeof date !== "string" ||
     typeof startTime !== "string" ||
     typeof endTime !== "string" ||
     typeof hourlyWage !== "string" ||
-    typeof jobTypeId !== "string"
+    typeof jobTypeId !== "string" ||
+    typeof jobTypeFeatureEnabled !== "string"
   ) {
     return null;
   }
@@ -76,7 +78,8 @@ function getShiftPayload(formData: FormData) {
     return null;
   }
 
-  const hasJobType = Boolean(jobTypeId);
+  const isJobTypeFeatureEnabled = jobTypeFeatureEnabled === "true";
+  const hasJobType = isJobTypeFeatureEnabled && Boolean(jobTypeId);
   const wageNumber = Number(hourlyWage);
 
   if (!hasJobType && (Number.isNaN(wageNumber) || wageNumber < 0)) {
@@ -87,7 +90,7 @@ function getShiftPayload(formData: FormData) {
     date,
     end_time: normalizeTime(endTime),
     hourly_wage: hasJobType ? null : Math.round(wageNumber),
-    job_type_id: jobTypeId || null,
+    job_type_id: hasJobType ? jobTypeId : null,
     start_time: normalizeTime(startTime)
   };
 }
@@ -147,6 +150,10 @@ async function resolveShiftPayload(formData: FormData) {
   };
 }
 
+function isMissingJobTypeSchemaError(code?: string | null, message?: string | null) {
+  return code === "42703" || code === "PGRST205" || message?.includes("job_type") || false;
+}
+
 export async function createShiftAction(
   _: ShiftFormState,
   formData: FormData
@@ -165,6 +172,23 @@ export async function createShiftAction(
     ...payload,
     user_id: userId
   });
+
+  if (error && isMissingJobTypeSchemaError(error.code, error.message)) {
+    const legacyPayload = {
+      date: payload.date,
+      end_time: payload.end_time,
+      hourly_wage: payload.hourly_wage,
+      start_time: payload.start_time,
+      user_id: userId
+    };
+    const { error: legacyError } = await supabase.from("shifts").insert(legacyPayload);
+
+    if (!legacyError) {
+      revalidatePath("/shifts");
+      revalidatePath("/calendar");
+      redirect("/shifts");
+    }
+  }
 
   if (error) {
     return {
@@ -198,6 +222,26 @@ export async function updateShiftAction(
     .update(payload)
     .eq("id", shiftId)
     .eq("user_id", userId);
+
+  if (error && isMissingJobTypeSchemaError(error.code, error.message)) {
+    const legacyPayload = {
+      date: payload.date,
+      end_time: payload.end_time,
+      hourly_wage: payload.hourly_wage,
+      start_time: payload.start_time
+    };
+    const { error: legacyError } = await supabase
+      .from("shifts")
+      .update(legacyPayload)
+      .eq("id", shiftId)
+      .eq("user_id", userId);
+
+    if (!legacyError) {
+      revalidatePath("/shifts");
+      revalidatePath("/calendar");
+      redirect("/shifts");
+    }
+  }
 
   if (error) {
     return {
@@ -234,11 +278,14 @@ export async function createJobTypeAction(formData: FormData) {
   }
 
   const { supabase, userId } = await getAuthenticatedUserId();
-
-  await supabase.from("job_types").insert({
+  const { error } = await supabase.from("job_types").insert({
     ...payload,
     user_id: userId
   });
+
+  if (error && isMissingJobTypeSchemaError(error.code, error.message)) {
+    return;
+  }
 
   revalidatePath("/shifts");
 }
@@ -251,8 +298,11 @@ export async function deleteJobTypeAction(formData: FormData) {
   }
 
   const { supabase, userId } = await getAuthenticatedUserId();
+  const { error } = await supabase.from("job_types").delete().eq("id", jobTypeId).eq("user_id", userId);
 
-  await supabase.from("job_types").delete().eq("id", jobTypeId).eq("user_id", userId);
+  if (error && isMissingJobTypeSchemaError(error.code, error.message)) {
+    return;
+  }
 
   revalidatePath("/shifts");
 }

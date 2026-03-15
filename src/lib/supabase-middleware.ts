@@ -9,7 +9,6 @@ const protectedRoutes = [
   "/calendar",
   "/shifts",
   "/dashboard",
-  "/classes",
   "/tasks"
 ];
 const authRoutes = ["/login"];

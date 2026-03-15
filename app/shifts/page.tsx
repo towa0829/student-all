@@ -111,6 +111,8 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
     redirect("/login?next=/shifts");
   }
 
+  let jobTypeFeatureEnabled = true;
+
   const [{ data: shifts, error: shiftsError }, { data: jobTypes, error: jobTypesError }] =
     await Promise.all([
       supabase
@@ -128,9 +130,42 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
         .order("created_at", { ascending: true })
     ]);
 
+  let shiftRows = shifts;
+  let resolvedShiftsError = shiftsError;
+
+  if (shiftsError?.code === "42703" && shiftsError.message.includes("job_type_id")) {
+    jobTypeFeatureEnabled = false;
+
+    const { data: legacyShifts, error: legacyShiftsError } = await supabase
+      .from("shifts")
+      .select("id, user_id, date, start_time, end_time, hourly_wage, created_at")
+      .eq("user_id", user.id)
+      .gte("date", rangeStartKey)
+      .lte("date", rangeEndKey)
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true });
+
+    if (!legacyShiftsError) {
+      shiftRows = (legacyShifts ?? []).map((shift) => ({
+        ...shift,
+        job_type_id: null
+      }));
+      resolvedShiftsError = null;
+    }
+  }
+
+  let jobTypeRows = jobTypes;
+  let resolvedJobTypesError = jobTypesError;
+
+  if (jobTypesError?.code === "PGRST205") {
+    jobTypeFeatureEnabled = false;
+    jobTypeRows = [];
+    resolvedJobTypesError = null;
+  }
+
   const queryErrors = [
-    { error: shiftsError, table: "shifts" },
-    { error: jobTypesError, table: "job_types" }
+    { error: resolvedShiftsError, table: "shifts" },
+    { error: resolvedJobTypesError, table: "job_types" }
   ].filter((item) => item.error);
 
   if (queryErrors.length > 0) {
@@ -144,8 +179,8 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
     );
   }
 
-  const shiftList = shiftsError ? [] : (shifts ?? []);
-  const jobTypeList = jobTypesError ? [] : (jobTypes ?? []);
+  const shiftList = resolvedShiftsError ? [] : (shiftRows ?? []);
+  const jobTypeList = resolvedJobTypesError ? [] : (jobTypeRows ?? []);
   const editingShift = shiftList.find((shift) => shift.id === edit);
   const summary = getSummary(shiftList);
 
@@ -162,6 +197,14 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
           <Panel className="border-amber-200 bg-amber-50">
             <p className="text-sm font-medium text-amber-800">
               シフトデータの取得に失敗したため、表示可能な情報のみを表示しています。
+            </p>
+          </Panel>
+        ) : null}
+
+        {!jobTypeFeatureEnabled ? (
+          <Panel className="border-amber-200 bg-amber-50">
+            <p className="text-sm font-medium text-amber-800">
+              バイト種類機能を使うには、Supabase に最新の schema.sql を適用する必要があります。現在は従来どおり時給の直接入力で利用できます。
             </p>
           </Panel>
         ) : null}
@@ -257,12 +300,14 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
                   : "バイト種類を選ぶと時給が自動入力されます。終了時刻は開始時刻より後の時刻を入力してください。"
               }
               initialShift={editingShift}
+              jobTypeFeatureEnabled={jobTypeFeatureEnabled}
               jobTypes={jobTypeList}
               pendingLabel={editingShift ? "更新中..." : "作成中..."}
               submitLabel={editingShift ? "シフトを更新" : "シフトを作成"}
               title={editingShift ? "シフトを編集" : "新規シフトを作成"}
             />
 
+            {jobTypeFeatureEnabled ? (
             <Panel className="space-y-4 border-slate-200 bg-white">
               <div>
                 <h2 className="text-xl font-semibold text-slate-950">バイト種類を登録</h2>
@@ -327,6 +372,7 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
                 )}
               </div>
             </Panel>
+            ) : null}
 
             {editingShift ? (
               <Link className="inline-flex text-sm font-semibold text-emerald-700" href="/shifts">

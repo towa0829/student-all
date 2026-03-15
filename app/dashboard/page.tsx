@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, School, Wallet } from "lucide-react";
+import { CheckCircle2, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -31,7 +31,6 @@ const currencyFormatter = new Intl.NumberFormat("ja-JP", {
 export default async function DashboardPage() {
   const now = new Date();
   const todayKey = formatDateKey(now);
-  const weekday = now.getDay();
   const supabase = await createSupabaseServerClient();
   const {
     data: { user }
@@ -41,13 +40,7 @@ export default async function DashboardPage() {
     redirect("/login?next=/dashboard");
   }
 
-  const [classesResult, assignmentsResult, shiftsResult, tasksResult] = await Promise.all([
-    supabase
-      .from("classes")
-      .select("id, name, period, room")
-      .eq("user_id", user.id)
-      .eq("day_of_week", weekday)
-      .order("period", { ascending: true }),
+  const [assignmentsResult, shiftsResult, tasksResult] = await Promise.all([
     supabase
       .from("assignments")
       .select("id, title, due_date, status")
@@ -69,7 +62,6 @@ export default async function DashboardPage() {
   ]);
 
   const queryErrors = [
-    { error: classesResult.error, table: "classes" },
     { error: assignmentsResult.error, table: "assignments" },
     { error: shiftsResult.error, table: "shifts" },
     { error: tasksResult.error, table: "tasks" }
@@ -86,7 +78,6 @@ export default async function DashboardPage() {
     );
   }
 
-  const classes = classesResult.error ? [] : (classesResult.data ?? []);
   const assignments = assignmentsResult.error ? [] : (assignmentsResult.data ?? []);
   const shifts = shiftsResult.error ? [] : (shiftsResult.data ?? []);
   const tasks = tasksResult.error ? [] : (tasksResult.data ?? []);
@@ -117,10 +108,6 @@ export default async function DashboardPage() {
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Panel className="space-y-2">
-            <p className="text-sm text-slate-500">授業</p>
-            <p className="text-3xl font-bold text-slate-950">{classes.length}</p>
-          </Panel>
-          <Panel className="space-y-2">
             <p className="text-sm text-slate-500">課題（未完了）</p>
             <p className="text-3xl font-bold text-amber-600">{pendingAssignments}</p>
           </Panel>
@@ -135,25 +122,6 @@ export default async function DashboardPage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <Panel className="space-y-4">
-            <div className="inline-flex rounded-2xl bg-sky-50 p-3 text-sky-700">
-              <School className="size-5" />
-            </div>
-            <h2 className="text-2xl font-semibold text-slate-950">今日の授業</h2>
-            {classes.length === 0 ? (
-              <p className="text-sm leading-7 text-slate-600">今日の授業は登録されていません。</p>
-            ) : (
-              <ul className="space-y-3 text-sm leading-7 text-slate-700">
-                {classes.map((schoolClass) => (
-                  <li className="rounded-2xl bg-slate-50 px-4 py-3" key={schoolClass.id}>
-                    <p className="font-semibold">{schoolClass.period}限 {schoolClass.name}</p>
-                    <p className="text-slate-500">教室: {schoolClass.room}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-
           <Panel className="space-y-4">
             <div className="inline-flex rounded-2xl bg-amber-50 p-3 text-amber-700">
               <CheckCircle2 className="size-5" />
@@ -218,12 +186,6 @@ export default async function DashboardPage() {
             href="/assignments"
           >
             課題管理を開く
-          </Link>
-          <Link
-            className="inline-flex items-center justify-center rounded-3xl bg-sky-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-sky-700"
-            href="/classes"
-          >
-            授業管理を開く
           </Link>
           <Link
             className="inline-flex items-center justify-center rounded-3xl bg-violet-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-violet-700"

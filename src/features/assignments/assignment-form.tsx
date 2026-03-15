@@ -8,13 +8,11 @@ import { AssignmentSubmitButton } from "@/features/assignments/assignment-submit
 import {
   type AssignmentFormState,
   type AssignmentRecord,
-  type ClassRecord,
   initialAssignmentFormState
 } from "@/features/assignments/types";
 
 type AssignmentFormProps = {
   action: (state: AssignmentFormState, formData: FormData) => Promise<AssignmentFormState>;
-  classes: ClassRecord[];
   initialAssignment?: AssignmentRecord;
   submitLabel: string;
   pendingLabel: string;
@@ -24,7 +22,6 @@ type AssignmentFormProps = {
 
 export function AssignmentForm({
   action,
-  classes,
   description,
   initialAssignment,
   pendingLabel,
@@ -69,24 +66,6 @@ export function AssignmentForm({
               required
               type="date"
             />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="assignment-class-id">
-              授業
-            </label>
-            <select
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-              defaultValue={initialAssignment?.class_id ?? ""}
-              id="assignment-class-id"
-              name="classId"
-            >
-              <option value="">未設定</option>
-              {classes.map((schoolClass) => (
-                <option key={schoolClass.id} value={schoolClass.id}>
-                  {schoolClass.name}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 

@@ -68,7 +68,6 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
 
   const [
     assignmentsResult,
-    classesResult,
     shiftsResult,
     tasksResult,
     upcomingAssignmentsResult,
@@ -81,12 +80,6 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .gte("due_date", rangeStartKey)
       .lte("due_date", rangeEndKey)
       .order("due_date", { ascending: true }),
-    supabase
-      .from("classes")
-      .select("id, user_id, name, day_of_week, period, room, created_at")
-      .eq("user_id", user.id)
-      .order("day_of_week", { ascending: true })
-      .order("period", { ascending: true }),
     supabase
       .from("shifts")
       .select("id, user_id, job_type_id, date, start_time, end_time, hourly_wage, created_at")
@@ -121,10 +114,30 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .order("due_date", { ascending: true })
   ]);
 
+  let shiftRows = shiftsResult.data;
+  let resolvedShiftsError = shiftsResult.error;
+
+  if (shiftsResult.error?.code === "42703" && shiftsResult.error.message.includes("job_type_id")) {
+    const legacyShiftsResult = await supabase
+      .from("shifts")
+      .select("id, user_id, date, start_time, end_time, hourly_wage, created_at")
+      .eq("user_id", user.id)
+      .gte("date", rangeStartKey)
+      .lte("date", rangeEndKey)
+      .order("date", { ascending: true });
+
+    if (!legacyShiftsResult.error) {
+      shiftRows = (legacyShiftsResult.data ?? []).map((shift) => ({
+        ...shift,
+        job_type_id: null
+      }));
+      resolvedShiftsError = null;
+    }
+  }
+
   const queryErrors = [
     { error: assignmentsResult.error, table: "assignments" },
-    { error: classesResult.error, table: "classes" },
-    { error: shiftsResult.error, table: "shifts" },
+    { error: resolvedShiftsError, table: "shifts" },
     { error: tasksResult.error, table: "tasks" },
     { error: upcomingAssignmentsResult.error, table: "assignments_upcoming" },
     { error: upcomingTasksResult.error, table: "tasks_upcoming" }
@@ -144,7 +157,6 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
   return (
     <CalendarPage
       assignments={assignmentsResult.error ? [] : (assignmentsResult.data ?? [])}
-      classes={classesResult.error ? [] : (classesResult.data ?? [])}
       currentMonth={currentMonth}
       dataWarning={
         queryErrors.length > 0
@@ -155,7 +167,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
         upcomingAssignmentsResult.error ? [] : (upcomingAssignmentsResult.data ?? [])
       }
       upcomingTasks={upcomingTasksResult.error ? [] : (upcomingTasksResult.data ?? [])}
-      shifts={shiftsResult.error ? [] : (shiftsResult.data ?? [])}
+      shifts={resolvedShiftsError ? [] : (shiftRows ?? [])}
       tasks={tasksResult.error ? [] : (tasksResult.data ?? [])}
       userEmail={user.email ?? null}
     />

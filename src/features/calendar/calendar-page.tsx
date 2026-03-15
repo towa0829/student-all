@@ -16,11 +16,10 @@ import type { Database } from "@/types/supabase";
 type AssignmentRecord = Database["public"]["Tables"]["assignments"]["Row"];
 type ShiftRecord = Database["public"]["Tables"]["shifts"]["Row"];
 type TaskRecord = Database["public"]["Tables"]["tasks"]["Row"];
-type ClassRecord = Database["public"]["Tables"]["classes"]["Row"];
 
 type CalendarEvent = {
   id: string;
-  type: "class" | "assignment" | "shift" | "task";
+  type: "assignment" | "shift" | "task";
   title: string;
   detail: string;
   dateKey: string;
@@ -38,7 +37,6 @@ type UpcomingItem = {
 
 type CalendarPageProps = {
   assignments: AssignmentRecord[];
-  classes: ClassRecord[];
   currentMonth: Date;
   dataWarning?: string | null;
   shifts: ShiftRecord[];
@@ -49,15 +47,9 @@ type CalendarPageProps = {
 };
 
 const dayLabels = ["日", "月", "火", "水", "木", "金", "土"] as const;
-const currencyFormatter = new Intl.NumberFormat("ja-JP", {
-  style: "currency",
-  currency: "JPY",
-  maximumFractionDigits: 0
-});
 
 const baseEventStyle: Record<CalendarEvent["type"], string> = {
   assignment: "border-amber-200 bg-amber-50 text-amber-800",
-  class: "border-sky-200 bg-sky-50 text-sky-800",
   shift: "border-emerald-200 bg-emerald-50 text-emerald-800",
   task: "border-violet-200 bg-violet-50 text-violet-800"
 };
@@ -98,42 +90,12 @@ function buildMonthGrid(currentMonth: Date) {
   return { days, gridEnd, gridStart, monthEnd, monthStart };
 }
 
-function getClassOccurrences(classes: ClassRecord[], days: Date[]) {
-  const events = new Map<string, CalendarEvent[]>();
-
-  classes.forEach((schoolClass) => {
-    days.forEach((day) => {
-      if (day.getDay() !== schoolClass.day_of_week) {
-        return;
-      }
-
-      const key = formatDateKey(day);
-      const current = events.get(key) ?? [];
-
-      current.push({
-        id: `${schoolClass.id}-${key}`,
-        dateKey: key,
-        type: "class",
-        title: schoolClass.name,
-        detail: `${schoolClass.period}限 ${schoolClass.room}`,
-        isCompleted: false
-      });
-
-      events.set(key, current);
-    });
-  });
-
-  return events;
-}
-
 function mergeEvents(
-  days: Date[],
   assignments: AssignmentRecord[],
-  classes: ClassRecord[],
   shifts: ShiftRecord[],
   tasks: TaskRecord[]
 ) {
-  const events = getClassOccurrences(classes, days);
+  const events = new Map<string, CalendarEvent[]>();
 
   assignments.forEach((assignment) => {
     const current = events.get(assignment.due_date) ?? [];
@@ -201,7 +163,6 @@ function createMonthLink(currentMonth: Date, offset: number) {
 
 export function CalendarPage({
   assignments,
-  classes,
   currentMonth,
   dataWarning,
   shifts,
@@ -211,31 +172,10 @@ export function CalendarPage({
   userEmail
 }: CalendarPageProps) {
   const { days } = buildMonthGrid(currentMonth);
-  const eventsByDate = mergeEvents(days, assignments, classes, shifts, tasks);
+  const eventsByDate = mergeEvents(assignments, shifts, tasks);
   const upcomingItems = [...upcomingAssignments, ...upcomingTasks].sort((a, b) =>
     a.due_date.localeCompare(b.due_date)
   );
-  const monthlyShifts = shifts.filter((shift) => {
-    const shiftDate = new Date(shift.date);
-
-    return (
-      shiftDate.getFullYear() === currentMonth.getFullYear() &&
-      shiftDate.getMonth() === currentMonth.getMonth()
-    );
-  });
-  const monthlyHours = monthlyShifts.reduce((acc, shift) => {
-    const [startHour, startMinute] = shift.start_time.split(":").map(Number);
-    const [endHour, endMinute] = shift.end_time.split(":").map(Number);
-
-    return acc + (endHour * 60 + endMinute - (startHour * 60 + startMinute)) / 60;
-  }, 0);
-  const monthlyPay = monthlyShifts.reduce((acc, shift) => {
-    const [startHour, startMinute] = shift.start_time.split(":").map(Number);
-    const [endHour, endMinute] = shift.end_time.split(":").map(Number);
-    const duration = (endHour * 60 + endMinute - (startHour * 60 + startMinute)) / 60;
-
-    return acc + duration * shift.hourly_wage;
-  }, 0);
   const monthFormatter = new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "long"
@@ -400,22 +340,6 @@ export function CalendarPage({
           </Panel>
 
           <div className="space-y-6 md:sticky md:top-28">
-            <Panel className="h-fit space-y-4 border-slate-200 bg-white">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Salary</p>
-                <h3 className="text-lg font-semibold text-slate-900">今月の給料見込み</h3>
-              </div>
-              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                  {monthFormatter.format(currentMonth)}
-                </p>
-                <p className="mt-2 text-2xl font-bold text-emerald-900">{currencyFormatter.format(monthlyPay)}</p>
-                <p className="mt-2 text-sm text-emerald-800">
-                  {monthlyShifts.length}件 / {monthlyHours.toFixed(1)}時間
-                </p>
-              </div>
-            </Panel>
-
             <Panel className="h-fit space-y-4 border-slate-200 bg-white">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
