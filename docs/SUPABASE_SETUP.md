@@ -47,12 +47,19 @@ http://localhost:3000
 
 SQL Editor で [supabase/schema.sql](../supabase/schema.sql) の内容を実行する．
 
+注意
+
+* 現在の `schema.sql` は `public` スキーマを削除して再作成する
+* 既存データは消えるため，新規構築時または全リセット時のみ実行する
+
 この SQL で以下を作成する．
 
 * classes
 * assignments
+* job_types
 * shifts
 * tasks
+* schedules
 * index
 * Row Level Security
 * user_id ベースのポリシー
