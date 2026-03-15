@@ -1,4 +1,4 @@
-import { CheckCircle2, Wallet } from "lucide-react";
+import { CalendarClock, CheckCircle2, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     redirect("/login?next=/dashboard");
   }
 
-  const [assignmentsResult, shiftsResult, tasksResult] = await Promise.all([
+  const [assignmentsResult, shiftsResult, tasksResult, schedulesResult] = await Promise.all([
     supabase
       .from("assignments")
       .select("id, title, due_date, status")
@@ -58,12 +58,21 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .eq("due_date", todayKey)
       .order("created_at", { ascending: true })
+    ,
+    supabase
+      .from("schedules")
+      .select("id, title, start_at, end_at")
+      .eq("user_id", user.id)
+      .lte("start_at", `${todayKey}T23:59`)
+      .gte("end_at", `${todayKey}T00:00`)
+      .order("start_at", { ascending: true })
   ]);
 
   const queryErrors = [
     { error: assignmentsResult.error, table: "assignments" },
     { error: shiftsResult.error, table: "shifts" },
-    { error: tasksResult.error, table: "tasks" }
+    { error: tasksResult.error, table: "tasks" },
+    { error: schedulesResult.error, table: "schedules" }
   ].filter((item) => item.error);
 
   if (queryErrors.length > 0) {
@@ -80,6 +89,7 @@ export default async function DashboardPage() {
   const assignments = assignmentsResult.error ? [] : (assignmentsResult.data ?? []);
   const shifts = shiftsResult.error ? [] : (shiftsResult.data ?? []);
   const tasks = tasksResult.error ? [] : (tasksResult.data ?? []);
+  const schedules = schedulesResult.error ? [] : (schedulesResult.data ?? []);
 
   const todayShiftPay = shifts.reduce((acc, shift) => {
     return acc + getShiftDurationHours(shift.start_time, shift.end_time) * shift.hourly_wage;
@@ -87,6 +97,7 @@ export default async function DashboardPage() {
 
   const pendingAssignments = assignments.filter((item) => item.status === "pending").length;
   const pendingTasks = tasks.filter((item) => item.status === "pending").length;
+  const todaySchedulesCount = schedules.length;
 
   return (
     <main className="relative overflow-hidden">
@@ -118,6 +129,10 @@ export default async function DashboardPage() {
             <p className="text-sm text-slate-500">本日のシフト見込み</p>
             <p className="text-2xl font-bold text-emerald-600">{currencyFormatter.format(todayShiftPay)}</p>
           </Panel>
+          <Panel className="space-y-2">
+            <p className="text-sm text-slate-500">本日のスケジュール</p>
+            <p className="text-3xl font-bold text-teal-600">{todaySchedulesCount}</p>
+          </Panel>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
@@ -143,6 +158,29 @@ export default async function DashboardPage() {
                     <p className="font-semibold text-violet-900">タスク: {task.title}</p>
                     <p className="text-sm text-violet-700">
                       状態: {task.status === "completed" ? "完了" : "未完了"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          <Panel className="space-y-4">
+            <div className="inline-flex rounded-2xl bg-teal-50 p-3 text-teal-700">
+              <CalendarClock className="size-5" />
+            </div>
+            <h2 className="text-2xl font-semibold text-slate-950">今日のスケジュール</h2>
+            {schedules.length === 0 ? (
+              <p className="text-sm leading-7 text-slate-600">今日のスケジュールはありません。</p>
+            ) : (
+              <div className="space-y-3">
+                {schedules.map((schedule) => (
+                  <div className="rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3" key={schedule.id}>
+                    <p className="font-semibold text-teal-900">{schedule.title}</p>
+                    <p className="text-sm text-teal-700">
+                      {schedule.start_at.slice(0, 10) === todayKey ? schedule.start_at.slice(11, 16) : "前日以前"}
+                      {" - "}
+                      {schedule.end_at.slice(0, 10) === todayKey ? schedule.end_at.slice(11, 16) : "翌日以降"}
                     </p>
                   </div>
                 ))}
