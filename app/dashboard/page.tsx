@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { CheckCircle2, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -178,33 +177,6 @@ export default async function DashboardPage() {
               </div>
             )}
           </Panel>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-5">
-          <Link
-            className="inline-flex items-center justify-center rounded-3xl bg-slate-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-slate-800"
-            href="/assignments"
-          >
-            課題管理を開く
-          </Link>
-          <Link
-            className="inline-flex items-center justify-center rounded-3xl bg-violet-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-violet-700"
-            href="/tasks"
-          >
-            タスク管理を開く
-          </Link>
-          <Link
-            className="inline-flex items-center justify-center rounded-3xl bg-white px-5 py-4 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 transition hover:bg-slate-50"
-            href="/calendar"
-          >
-            カレンダーを開く
-          </Link>
-          <Link
-            className="inline-flex items-center justify-center rounded-3xl bg-emerald-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            href="/shifts"
-          >
-            バイト管理を開く
-          </Link>
         </section>
       </div>
     </main>

@@ -177,3 +177,42 @@ export async function updateShiftFromCalendarAction(formData: FormData) {
   revalidateCalendarScreens();
   redirect(getCalendarRedirectPath(formData));
 }
+
+export async function updateScheduleFromCalendarAction(formData: FormData) {
+  const scheduleId = formData.get("scheduleId");
+  const title = formData.get("title");
+  const startAt = formData.get("startAt");
+  const endAt = formData.get("endAt");
+
+  if (
+    typeof scheduleId !== "string" ||
+    typeof title !== "string" ||
+    typeof startAt !== "string" ||
+    typeof endAt !== "string" ||
+    !scheduleId ||
+    !title.trim() ||
+    !startAt ||
+    !endAt
+  ) {
+    return;
+  }
+
+  if (startAt >= endAt) {
+    return;
+  }
+
+  const { supabase, userId } = await getAuthenticated();
+
+  await supabase
+    .from("schedules")
+    .update({
+      title: title.trim(),
+      start_at: startAt,
+      end_at: endAt
+    })
+    .eq("id", scheduleId)
+    .eq("user_id", userId);
+
+  revalidateCalendarScreens();
+  redirect(getCalendarRedirectPath(formData));
+}

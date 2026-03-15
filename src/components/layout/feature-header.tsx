@@ -23,7 +23,8 @@ const defaultHeaderLinks: HeaderLink[] = [
   { href: "/calendar", label: "カレンダー" },
   { href: "/assignments", label: "課題管理" },
   { href: "/tasks", label: "タスク管理" },
-  { href: "/shifts", label: "バイト管理" }
+  { href: "/shifts", label: "バイト管理" },
+  { href: "/schedules", label: "スケジュール" }
 ];
 
 export function FeatureHeader({

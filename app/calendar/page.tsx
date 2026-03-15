@@ -10,10 +10,12 @@ type CalendarShiftRecord = Database["public"]["Tables"]["shifts"]["Row"] & {
   job_type_name?: string | null;
 };
 
+type ScheduleRecord = Database["public"]["Tables"]["schedules"]["Row"];
+
 type CalendarRouteProps = {
   searchParams: Promise<{
     editId?: string;
-    editType?: "assignment" | "shift" | "task";
+    editType?: "assignment" | "schedule" | "shift" | "task";
     month?: string;
   }>;
 };
@@ -80,6 +82,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
     shiftsResult,
     tasksResult,
     jobTypesResult,
+    schedulesResult,
     upcomingAssignmentsResult,
     upcomingTasksResult
   ] = await Promise.all([
@@ -109,6 +112,13 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .from("job_types")
       .select("id, name")
       .eq("user_id", user.id),
+    supabase
+      .from("schedules")
+      .select("id, user_id, title, start_at, end_at, memo, created_at")
+      .eq("user_id", user.id)
+      .gte("start_at", rangeStartKey)
+      .lte("start_at", rangeEndKey + "T23:59")
+      .order("start_at", { ascending: true }),
     supabase
       .from("assignments")
       .select("id, title, due_date, status")
@@ -162,11 +172,14 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
     }));
   }
 
+  const schedules: ScheduleRecord[] = schedulesResult.error ? [] : (schedulesResult.data ?? []);
+
   const queryErrors = [
     { error: assignmentsResult.error, table: "assignments" },
     { error: resolvedShiftsError, table: "shifts" },
     { error: tasksResult.error, table: "tasks" },
     { error: jobTypesResult.error, table: "job_types" },
+    { error: schedulesResult.error, table: "schedules" },
     { error: upcomingAssignmentsResult.error, table: "assignments_upcoming" },
     { error: upcomingTasksResult.error, table: "tasks_upcoming" }
   ].filter((item) => item.error);
@@ -185,7 +198,9 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
         ? assignments.find((item) => item.id === editId)
         : editType === "task"
           ? tasks.find((item) => item.id === editId)
-          : normalizedShifts.find((item) => item.id === editId)
+          : editType === "schedule"
+            ? schedules.find((item) => item.id === editId)
+            : normalizedShifts.find((item) => item.id === editId)
       : null;
 
   if (queryErrors.length > 0) {
@@ -212,6 +227,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       editType={editType ?? null}
       modalItem={modalItem ?? null}
       monthParam={formatDateKey(currentMonth).slice(0, 7)}
+      schedules={schedules}
       upcomingAssignments={
         upcomingAssignmentsResult.error ? [] : (upcomingAssignmentsResult.data ?? [])
       }

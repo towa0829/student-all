@@ -5,9 +5,11 @@ import { deleteAssignmentAction } from "@/actions/assignments";
 import { signOutAction } from "@/actions/auth";
 import {
   updateAssignmentFromCalendarAction,
+  updateScheduleFromCalendarAction,
   updateShiftFromCalendarAction,
   updateTaskFromCalendarAction
 } from "@/actions/calendar";
+import { deleteScheduleAction } from "@/actions/schedules";
 import { deleteShiftAction } from "@/actions/shifts";
 import { deleteTaskAction } from "@/actions/tasks";
 import { Button } from "@/components/ui/button";
@@ -18,18 +20,28 @@ import type { Database } from "@/types/supabase";
 type AssignmentRecord = Database["public"]["Tables"]["assignments"]["Row"];
 type ShiftRecord = Database["public"]["Tables"]["shifts"]["Row"];
 type TaskRecord = Database["public"]["Tables"]["tasks"]["Row"];
+type ScheduleRecord = Database["public"]["Tables"]["schedules"]["Row"];
 type CalendarShiftRecord = ShiftRecord & {
   job_type_name?: string | null;
 };
 
 type CalendarEvent = {
   id: string;
-  type: "assignment" | "shift" | "task";
+  type: "assignment" | "schedule" | "shift" | "task";
   title: string;
   timeLabel?: string;
   dateKey: string;
   isCompleted: boolean;
+  sortTime: string;
   status?: "pending" | "completed";
+};
+
+type WeekScheduleBar = {
+  endCol: number;
+  id: string;
+  lane: number;
+  startCol: number;
+  title: string;
 };
 
 type UpcomingItem = {
@@ -44,13 +56,15 @@ type CalendarPageProps = {
   currentMonth: Date;
   dataWarning?: string | null;
   editId: string | null;
-  editType: "assignment" | "shift" | "task" | null;
+  editType: "assignment" | "schedule" | "shift" | "task" | null;
   modalItem:
     | AssignmentRecord
     | TaskRecord
+    | ScheduleRecord
     | CalendarShiftRecord
     | null;
   monthParam: string;
+  schedules: ScheduleRecord[];
   shifts: CalendarShiftRecord[];
   tasks: TaskRecord[];
   upcomingAssignments: UpcomingItem[];
@@ -62,6 +76,7 @@ const dayLabels = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 const baseEventStyle: Record<CalendarEvent["type"], string> = {
   assignment: "border-orange-300 bg-orange-100 text-orange-900",
+  schedule: "border-teal-300 bg-teal-100 text-teal-900",
   shift: "border-sky-300 bg-sky-100 text-sky-900",
   task: "border-violet-300 bg-violet-100 text-violet-900"
 };
@@ -104,6 +119,7 @@ function buildMonthGrid(currentMonth: Date) {
 
 function mergeEvents(
   assignments: AssignmentRecord[],
+  schedules: ScheduleRecord[],
   shifts: CalendarShiftRecord[],
   tasks: TaskRecord[]
 ) {
@@ -118,6 +134,7 @@ function mergeEvents(
       type: "assignment",
       title: assignment.title,
       isCompleted: assignment.status === "completed",
+      sortTime: "99:99",
       status: assignment.status
     });
 
@@ -133,7 +150,8 @@ function mergeEvents(
       type: "shift",
       title: shift.job_type_name ?? "バイト",
       timeLabel: `${shift.start_time.slice(0, 5)} - ${shift.end_time.slice(0, 5)}`,
-      isCompleted: false
+      isCompleted: false,
+      sortTime: shift.start_time.slice(0, 5)
     });
 
     events.set(shift.date, current);
@@ -152,10 +170,31 @@ function mergeEvents(
       type: "task",
       title: task.title,
       isCompleted: task.status === "completed",
+      sortTime: "99:99",
       status: task.status
     });
 
     events.set(task.due_date, current);
+  });
+
+  schedules.forEach((schedule) => {
+    const startDateKey = schedule.start_at.slice(0, 10);
+    const endDateKey = schedule.end_at.slice(0, 10);
+    if (startDateKey === endDateKey) {
+      const current = events.get(startDateKey) ?? [];
+
+      current.push({
+        id: schedule.id,
+        dateKey: startDateKey,
+        type: "schedule",
+        title: schedule.title,
+        timeLabel: `${schedule.start_at.slice(11, 16)} - ${schedule.end_at.slice(11, 16)}`,
+        isCompleted: false,
+        sortTime: schedule.start_at.slice(11, 16)
+      });
+
+      events.set(startDateKey, current);
+    }
   });
 
   return events;
@@ -168,6 +207,61 @@ function createMonthLink(currentMonth: Date, offset: number) {
   return `/calendar?month=${next.getFullYear()}-${month}`;
 }
 
+function diffDays(startKey: string, endKey: string) {
+  const start = new Date(`${startKey}T00:00:00`).getTime();
+  const end = new Date(`${endKey}T00:00:00`).getTime();
+
+  return Math.floor((end - start) / 86400000);
+}
+
+function getWeekScheduleBars(weekDays: Date[], schedules: ScheduleRecord[]) {
+  if (weekDays.length !== 7) {
+    return [] as WeekScheduleBar[];
+  }
+
+  const weekStartKey = formatDateKey(weekDays[0]);
+  const weekEndKey = formatDateKey(weekDays[6]);
+
+  const targets = schedules
+    .filter((schedule) => schedule.start_at.slice(0, 10) !== schedule.end_at.slice(0, 10))
+    .filter((schedule) => {
+      const startKey = schedule.start_at.slice(0, 10);
+      const endKey = schedule.end_at.slice(0, 10);
+
+      return !(endKey < weekStartKey || startKey > weekEndKey);
+    })
+    .map((schedule) => {
+      const startKey = schedule.start_at.slice(0, 10);
+      const endKey = schedule.end_at.slice(0, 10);
+
+      return {
+        id: schedule.id,
+        startCol: Math.max(0, diffDays(weekStartKey, startKey)),
+        endCol: Math.min(6, diffDays(weekStartKey, endKey)),
+        title: schedule.title
+      };
+    })
+    .sort((a, b) => a.startCol - b.startCol || a.endCol - b.endCol);
+
+  const laneEnds: number[] = [];
+
+  return targets.map((target) => {
+    let lane = laneEnds.findIndex((endCol) => target.startCol > endCol);
+
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(target.endCol);
+    } else {
+      laneEnds[lane] = target.endCol;
+    }
+
+    return {
+      ...target,
+      lane
+    };
+  });
+}
+
 export function CalendarPage({
   assignments,
   currentMonth,
@@ -176,14 +270,19 @@ export function CalendarPage({
   editType,
   modalItem,
   monthParam,
+  schedules,
   shifts,
   tasks,
   upcomingAssignments,
   upcomingTasks,
   userEmail
 }: CalendarPageProps) {
+  const todayKey = formatDateKey(new Date());
   const { days } = buildMonthGrid(currentMonth);
-  const eventsByDate = mergeEvents(assignments, shifts, tasks);
+  const eventsByDate = mergeEvents(assignments, schedules, shifts, tasks);
+  const weekDays = Array.from({ length: days.length / 7 }, (_, index) =>
+    days.slice(index * 7, index * 7 + 7)
+  );
   const upcomingItems = [...upcomingAssignments, ...upcomingTasks].sort((a, b) =>
     a.due_date.localeCompare(b.due_date)
   );
@@ -192,9 +291,10 @@ export function CalendarPage({
     month: "long"
   });
   const closeModalLink = `/calendar?month=${monthParam}`;
-  const isAssignmentModal = editType === "assignment" && modalItem && "due_date" in modalItem && "memo" in modalItem;
+  const isAssignmentModal = editType === "assignment" && modalItem && "due_date" in modalItem && "memo" in modalItem && !("start_at" in modalItem);
   const isTaskModal = editType === "task" && modalItem && "due_date" in modalItem && !("memo" in modalItem);
   const isShiftModal = editType === "shift" && modalItem && "start_time" in modalItem;
+  const isScheduleModal = editType === "schedule" && modalItem && "start_at" in modalItem;
 
   return (
     <main className="relative overflow-hidden">
@@ -244,48 +344,75 @@ export function CalendarPage({
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
-              {days.map((day) => {
-                const key = formatDateKey(day);
-                const dayEvents = eventsByDate.get(key) ?? [];
-                const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+            <div className="space-y-2 overflow-hidden rounded-2xl border border-slate-200">
+              {weekDays.map((week, weekIndex) => {
+                const scheduleBars = getWeekScheduleBars(week, schedules);
+                const laneCount = scheduleBars.length > 0 ? Math.max(...scheduleBars.map((bar) => bar.lane)) + 1 : 0;
+                const barAreaHeight = laneCount > 0 ? laneCount * 24 + 20 : 0;
 
                 return (
-                  <div
-                    className={
-                      isCurrentMonth
-                        ? "min-h-40 rounded-3xl border border-slate-200 bg-slate-50/80 p-3"
-                        : "min-h-40 rounded-3xl border border-slate-100 bg-slate-50/30 p-3 opacity-55"
-                    }
-                    key={key}
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-900">{day.getDate()}</span>
-                      {dayEvents.length > 0 ? (
-                        <span className="rounded-full bg-slate-900 px-2 py-1 text-[10px] font-bold text-white">
-                          {dayEvents.length}
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="space-y-2">
-                      {dayEvents.slice(0, 4).map((event) => (
-                        <Link
-                          className={`block rounded-2xl border px-2 py-2 text-[11px] leading-5 transition-colors hover:brightness-[0.98] ${getEventStyle(event)}`}
-                          href={`/calendar?month=${monthParam}&editType=${event.type}&editId=${event.id}`}
-                          key={event.id}
-                        >
-                          <p className="flex items-center gap-1 font-semibold">
-                            {event.isCompleted ? <Check className="size-3" /> : null}
-                            {event.title}
-                          </p>
-                          {event.timeLabel ? <p>{event.timeLabel}</p> : null}
-                        </Link>
-                      ))}
-                      {dayEvents.length > 4 ? (
-                        <p className="text-[11px] font-semibold text-slate-500">
-                          +{dayEvents.length - 4} 件の予定
-                        </p>
-                      ) : null}
+                  <div className="relative border-b border-slate-200 last:border-b-0" key={`week-${weekIndex}`}>
+                    {scheduleBars.length > 0 ? (
+                      <div className="pointer-events-none absolute inset-x-0 top-12 z-10 px-1">
+                        {scheduleBars.map((bar) => {
+                          const left = `calc(${(bar.startCol / 7) * 100}% + 3px)`;
+                          const width = `calc(${((bar.endCol - bar.startCol + 1) / 7) * 100}% - 6px)`;
+
+                          return (
+                            <Link
+                              className="pointer-events-auto absolute h-5 overflow-hidden rounded-md border border-teal-300 bg-teal-100 px-2 text-[10px] font-semibold leading-5 text-teal-900 hover:brightness-95"
+                              href={`/calendar?month=${monthParam}&editType=schedule&editId=${bar.id}`}
+                              key={`${bar.id}-${bar.startCol}-${bar.endCol}`}
+                              style={{ left, top: `${bar.lane * 24}px`, width }}
+                            >
+                              {bar.title}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+
+                    <div className="grid grid-cols-7">
+                      {week.map((day) => {
+                        const key = formatDateKey(day);
+                        const dayEvents = eventsByDate.get(key) ?? [];
+                        const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+                        const isToday = key === todayKey;
+
+                        return (
+                          <div
+                            className="min-h-44 border-r border-slate-200 p-2 last:border-r-0"
+                            key={key}
+                          >
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className={isToday ? "flex size-6 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white" : isCurrentMonth ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-400"}>
+                                {day.getDate()}
+                              </span>
+                            </div>
+
+                            <div className="space-y-2" style={{ marginTop: `${barAreaHeight}px` }}>
+                              {[...dayEvents].sort((a, b) => a.sortTime.localeCompare(b.sortTime)).slice(0, 4).map((event) => (
+                                <Link
+                                  className={`block rounded-xl border px-2 py-2 text-[11px] leading-5 transition-colors hover:brightness-[0.98] ${getEventStyle(event)}`}
+                                  href={`/calendar?month=${monthParam}&editType=${event.type}&editId=${event.id}`}
+                                  key={`${event.id}-${event.dateKey}`}
+                                >
+                                  <p className="flex items-center gap-1 font-semibold">
+                                    {event.isCompleted ? <Check className="size-3" /> : null}
+                                    {event.title}
+                                  </p>
+                                  {event.timeLabel ? <p>{event.timeLabel}</p> : null}
+                                </Link>
+                              ))}
+                              {dayEvents.length > 4 ? (
+                                <p className="text-[11px] font-semibold text-slate-500">
+                                  +{dayEvents.length - 4} 件の予定
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -452,8 +579,7 @@ export function CalendarPage({
                 </div>
               ) : null}
 
-              {isShiftModal ? (
-                <div className="space-y-4">
+              {isShiftModal ? (                <div className="space-y-4">
                   <form action={updateShiftFromCalendarAction} className="space-y-4" id="calendar-shift-form">
                     <input name="shiftId" type="hidden" value={modalItem.id} />
                     <input name="month" type="hidden" value={monthParam} />
@@ -517,6 +643,65 @@ export function CalendarPage({
                     <Button form="calendar-shift-form" type="submit">保存</Button>
                     <form action={deleteShiftAction}>
                       <input name="shiftId" type="hidden" value={modalItem.id} />
+                      <Button className="bg-rose-600 text-white shadow-none hover:bg-rose-700" type="submit">
+                        削除
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+
+              {isScheduleModal ? (
+                <div className="space-y-4">
+                  <form action={updateScheduleFromCalendarAction} className="space-y-4" id="calendar-schedule-form">
+                    <input name="scheduleId" type="hidden" value={modalItem.id} />
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="modal-schedule-title">
+                        タイトル
+                      </label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={modalItem.title}
+                        id="modal-schedule-title"
+                        name="title"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-schedule-start">
+                          開始日時
+                        </label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.start_at}
+                          id="modal-schedule-start"
+                          name="startAt"
+                          required
+                          type="datetime-local"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-schedule-end">
+                          終了日時
+                        </label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.end_at}
+                          id="modal-schedule-end"
+                          name="endAt"
+                          required
+                          type="datetime-local"
+                        />
+                      </div>
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="calendar-schedule-form" type="submit">保存</Button>
+                    <form action={deleteScheduleAction}>
+                      <input name="scheduleId" type="hidden" value={modalItem.id} />
                       <Button className="bg-rose-600 text-white shadow-none hover:bg-rose-700" type="submit">
                         削除
                       </Button>

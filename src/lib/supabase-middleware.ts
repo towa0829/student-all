@@ -7,6 +7,7 @@ import type { Database } from "@/types/supabase";
 const protectedRoutes = [
   "/assignments",
   "/calendar",
+  "/schedules",
   "/shifts",
   "/dashboard",
   "/tasks"

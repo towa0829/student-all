@@ -172,6 +172,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      schedules: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          start_at: string;
+          end_at: string;
+          memo: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          start_at: string;
+          end_at: string;
+          memo?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          title?: string;
+          start_at?: string;
+          end_at?: string;
+          memo?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
