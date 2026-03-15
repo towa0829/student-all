@@ -74,7 +74,7 @@ export default async function AssignmentsPage({ searchParams }: AssignmentsPageP
 
   return (
     <main className="relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.18),transparent_28%),linear-gradient(180deg,#f4fbf8_0%,#f8fafc_46%,#eef2ff_100%)]" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-full bg-[linear-gradient(180deg,#eef2f7_0%,#f8fafc_55%)]" />
       <div className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
           signOutAction={signOutAction}

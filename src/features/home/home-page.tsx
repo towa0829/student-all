@@ -6,7 +6,7 @@ import { Panel } from "@/components/ui/panel";
 export function HomePage() {
   return (
     <main className="relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.20),transparent_32%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.14),transparent_26%),linear-gradient(180deg,#f4fbf8_0%,#f8fafc_60%,#eef2ff_100%)]" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-full bg-[linear-gradient(180deg,#eef2f7_0%,#f8fafc_55%)]" />
       <div className="mx-auto flex min-h-screen w-full max-w-4xl items-center px-6 py-10 lg:px-10">
         <Panel className="w-full space-y-8 border-white/70 bg-white/80 px-8 py-10 shadow-[0_28px_80px_-36px_rgba(15,23,42,0.45)] backdrop-blur md:px-12">
           <div className="space-y-4">

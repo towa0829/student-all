@@ -21,10 +21,10 @@ type FeatureHeaderProps = {
 const defaultHeaderLinks: HeaderLink[] = [
   { href: "/dashboard", label: "ダッシュボード" },
   { href: "/calendar", label: "カレンダー" },
+  { href: "/schedules", label: "スケジュール" },
   { href: "/assignments", label: "課題管理" },
   { href: "/tasks", label: "タスク管理" },
-  { href: "/shifts", label: "バイト管理" },
-  { href: "/schedules", label: "スケジュール" }
+  { href: "/shifts", label: "バイト管理" }
 ];
 
 export function FeatureHeader({

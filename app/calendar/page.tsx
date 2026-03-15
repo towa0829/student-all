@@ -14,6 +14,8 @@ type ScheduleRecord = Database["public"]["Tables"]["schedules"]["Row"];
 
 type CalendarRouteProps = {
   searchParams: Promise<{
+    addDate?: string;
+    addType?: "assignment" | "schedule" | "shift" | "task";
     editId?: string;
     editType?: "assignment" | "schedule" | "shift" | "task";
     month?: string;
@@ -49,7 +51,7 @@ function parseMonthParam(month?: string) {
 }
 
 export default async function CalendarRoute({ searchParams }: CalendarRouteProps) {
-  const { editId, editType, month } = await searchParams;
+  const { addDate, addType, editId, editType, month } = await searchParams;
   const today = new Date();
   const weekLater = new Date(today);
 
@@ -173,6 +175,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
   }
 
   const schedules: ScheduleRecord[] = schedulesResult.error ? [] : (schedulesResult.data ?? []);
+  const jobTypes = jobTypesResult.error ? [] : (jobTypesResult.data ?? []);
 
   const queryErrors = [
     { error: assignmentsResult.error, table: "assignments" },
@@ -223,8 +226,11 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
           ? "一部データの取得に失敗したため、表示可能な情報のみを表示しています。"
           : null
       }
+      addDate={addDate && /^\d{4}-\d{2}-\d{2}$/.test(addDate) ? addDate : null}
+      addType={addType ?? null}
       editId={editId ?? null}
       editType={editType ?? null}
+      jobTypes={jobTypes}
       modalItem={modalItem ?? null}
       monthParam={formatDateKey(currentMonth).slice(0, 7)}
       schedules={schedules}

@@ -7,7 +7,11 @@ import {
   updateAssignmentFromCalendarAction,
   updateScheduleFromCalendarAction,
   updateShiftFromCalendarAction,
-  updateTaskFromCalendarAction
+  updateTaskFromCalendarAction,
+  createAssignmentFromCalendarAction,
+  createScheduleFromCalendarAction,
+  createShiftFromCalendarAction,
+  createTaskFromCalendarAction
 } from "@/actions/calendar";
 import { deleteScheduleAction } from "@/actions/schedules";
 import { deleteShiftAction } from "@/actions/shifts";
@@ -52,11 +56,14 @@ type UpcomingItem = {
 };
 
 type CalendarPageProps = {
+  addDate: string | null;
+  addType: "assignment" | "schedule" | "shift" | "task" | null;
   assignments: AssignmentRecord[];
   currentMonth: Date;
   dataWarning?: string | null;
   editId: string | null;
   editType: "assignment" | "schedule" | "shift" | "task" | null;
+  jobTypes: { id: string; name: string }[];
   modalItem:
     | AssignmentRecord
     | TaskRecord
@@ -263,11 +270,14 @@ function getWeekScheduleBars(weekDays: Date[], schedules: ScheduleRecord[]) {
 }
 
 export function CalendarPage({
+  addDate,
+  addType,
   assignments,
   currentMonth,
   dataWarning,
   editId,
   editType,
+  jobTypes,
   modalItem,
   monthParam,
   schedules,
@@ -298,7 +308,7 @@ export function CalendarPage({
 
   return (
     <main className="relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_top_left,rgba(29,153,102,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.12),transparent_25%),linear-gradient(180deg,#effcf5_0%,#f8fafc_56%,#eef2ff_100%)]" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-full bg-[linear-gradient(180deg,#eef2f7_0%,#f8fafc_55%)]" />
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-6 py-10 lg:px-10">
         <FeatureHeader
           signOutAction={signOutAction}
@@ -311,8 +321,8 @@ export function CalendarPage({
           </Panel>
         ) : null}
 
-        <section className="grid gap-6 md:items-start md:grid-cols-[minmax(0,1fr),320px]">
-          <Panel className="space-y-6 border-slate-200 bg-white">
+        <section className="grid gap-6 md:items-start md:grid-cols-[1fr_320px]">
+          <Panel className="min-w-0 space-y-6 border-slate-200 bg-white">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm text-slate-500">対象月</p>
@@ -385,9 +395,12 @@ export function CalendarPage({
                             key={key}
                           >
                             <div className="mb-2 flex items-center justify-between">
-                              <span className={isToday ? "flex size-6 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white" : isCurrentMonth ? "text-sm font-semibold text-slate-900" : "text-sm font-semibold text-slate-400"}>
+                              <Link
+                                className={isToday ? "flex size-6 items-center justify-center rounded-full bg-emerald-500 text-sm font-bold text-white hover:opacity-80 transition-opacity" : isCurrentMonth ? "flex size-6 items-center justify-center rounded-full text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors" : "flex size-6 items-center justify-center rounded-full text-sm font-semibold text-slate-400 hover:bg-slate-50 transition-colors"}
+                                href={`/calendar?month=${monthParam}&addDate=${key}`}
+                              >
                                 {day.getDate()}
-                              </span>
+                              </Link>
                             </div>
 
                             <div className="space-y-2" style={{ marginTop: `${barAreaHeight}px` }}>
@@ -706,6 +719,248 @@ export function CalendarPage({
                         削除
                       </Button>
                     </form>
+                  </div>
+                </div>
+              ) : null}
+            </Panel>
+          </div>
+        ) : null}
+
+        {addDate && !editId ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <Panel className="max-h-[85vh] w-full max-w-xl overflow-auto border-slate-200 bg-white">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-500">{addDate}</p>
+                  <h3 className="text-lg font-semibold text-slate-900">
+                    {addType ? (
+                      <>
+                        {addType === "schedule" && "スケジュールを追加"}
+                        {addType === "shift" && "シフトを追加"}
+                        {addType === "task" && "タスクを追加"}
+                        {addType === "assignment" && "課題を追加"}
+                      </>
+                    ) : (
+                      "何を追加しますか？"
+                    )}
+                  </h3>
+                </div>
+                <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={closeModalLink}>
+                  閉じる
+                </Link>
+              </div>
+
+              {!addType ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <Link
+                    className="flex items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 px-4 py-5 text-sm font-semibold text-teal-900 transition hover:bg-teal-100"
+                    href={`/calendar?month=${monthParam}&addDate=${addDate}&addType=schedule`}
+                  >
+                    スケジュール
+                  </Link>
+                  <Link
+                    className="flex items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 px-4 py-5 text-sm font-semibold text-sky-900 transition hover:bg-sky-100"
+                    href={`/calendar?month=${monthParam}&addDate=${addDate}&addType=shift`}
+                  >
+                    シフト
+                  </Link>
+                  <Link
+                    className="flex items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 px-4 py-5 text-sm font-semibold text-violet-900 transition hover:bg-violet-100"
+                    href={`/calendar?month=${monthParam}&addDate=${addDate}&addType=task`}
+                  >
+                    タスク
+                  </Link>
+                  <Link
+                    className="flex items-center justify-center rounded-2xl border border-orange-200 bg-orange-50 px-4 py-5 text-sm font-semibold text-orange-900 transition hover:bg-orange-100"
+                    href={`/calendar?month=${monthParam}&addDate=${addDate}&addType=assignment`}
+                  >
+                    課題
+                  </Link>
+                </div>
+              ) : null}
+
+              {addType === "schedule" ? (
+                <div className="space-y-4">
+                  <form action={createScheduleFromCalendarAction} className="space-y-4" id="create-schedule-form">
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-schedule-title">タイトル</label>
+                      <input
+                        autoFocus
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        id="new-schedule-title"
+                        name="title"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="new-schedule-start">開始日時</label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={`${addDate}T09:00`}
+                          id="new-schedule-start"
+                          name="startAt"
+                          required
+                          type="datetime-local"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="new-schedule-end">終了日時</label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={`${addDate}T10:00`}
+                          id="new-schedule-end"
+                          name="endAt"
+                          required
+                          type="datetime-local"
+                        />
+                      </div>
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="create-schedule-form" type="submit">追加</Button>
+                    <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={`/calendar?month=${monthParam}&addDate=${addDate}`}>戻る</Link>
+                  </div>
+                </div>
+              ) : null}
+
+              {addType === "shift" ? (
+                <div className="space-y-4">
+                  <form action={createShiftFromCalendarAction} className="space-y-4" id="create-shift-form">
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-date">勤務日</label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={addDate}
+                        id="new-shift-date"
+                        name="date"
+                        required
+                        type="date"
+                      />
+                    </div>
+                    {jobTypes.length > 0 ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-job-type">勤務先</label>
+                        <select
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          id="new-shift-job-type"
+                          name="jobTypeId"
+                        >
+                          <option value="">選択しない</option>
+                          {jobTypes.map((jt) => (
+                            <option key={jt.id} value={jt.id}>{jt.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-start">開始時刻</label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          id="new-shift-start"
+                          name="startTime"
+                          required
+                          type="time"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-end">終了時刻</label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          id="new-shift-end"
+                          name="endTime"
+                          required
+                          type="time"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-wage">時給（円）</label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={1000}
+                        id="new-shift-wage"
+                        min={0}
+                        name="hourlyWage"
+                        required
+                        type="number"
+                      />
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="create-shift-form" type="submit">追加</Button>
+                    <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={`/calendar?month=${monthParam}&addDate=${addDate}`}>戻る</Link>
+                  </div>
+                </div>
+              ) : null}
+
+              {addType === "task" ? (
+                <div className="space-y-4">
+                  <form action={createTaskFromCalendarAction} className="space-y-4" id="create-task-form">
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-task-title">タスク名</label>
+                      <input
+                        autoFocus
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        id="new-task-title"
+                        name="title"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-task-date">締切日</label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={addDate}
+                        id="new-task-date"
+                        name="dueDate"
+                        type="date"
+                      />
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="create-task-form" type="submit">追加</Button>
+                    <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={`/calendar?month=${monthParam}&addDate=${addDate}`}>戻る</Link>
+                  </div>
+                </div>
+              ) : null}
+
+              {addType === "assignment" ? (
+                <div className="space-y-4">
+                  <form action={createAssignmentFromCalendarAction} className="space-y-4" id="create-assignment-form">
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-assignment-title">課題名</label>
+                      <input
+                        autoFocus
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        id="new-assignment-title"
+                        name="title"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="new-assignment-date">締切日</label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={addDate}
+                        id="new-assignment-date"
+                        name="dueDate"
+                        required
+                        type="date"
+                      />
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="create-assignment-form" type="submit">追加</Button>
+                    <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={`/calendar?month=${monthParam}&addDate=${addDate}`}>戻る</Link>
                   </div>
                 </div>
               ) : null}
