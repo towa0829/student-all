@@ -1,6 +1,6 @@
 # Student's All
 
-Student's All は、授業・課題・予定・バイトシフト・給料・タスクを一つのアプリで管理する学生生活向け Web アプリです。
+Student's All は、授業・課題・スケジュール・バイトシフト・給料・タスクを一つのアプリで管理できる学生生活向け Web アプリです。
 
 ## Tech Stack
 
@@ -12,32 +12,20 @@ Student's All は、授業・課題・予定・バイトシフト・給料・タ
 - PostgreSQL
 - Supabase Auth
 
-## Current Step
+## Features
 
-現在は Step 8 まで実装済みです。
+- 課題管理: 登録、編集、削除、完了切り替え、締切順表示
+- タスク管理: 登録、編集、削除、完了切り替え
+- スケジュール管理: 登録、編集、削除、複数日予定対応
+- カレンダー: 授業、課題、タスク、シフト、スケジュールの月間統合表示
+- カレンダー追加モーダル: 日付クリックから項目種別を選んで追加可能
+- シフト管理: 勤務先、時給、勤務時間、給料見込みの管理
+- ダッシュボード: 今日の課題、タスク、スケジュール、シフト見込みを集約表示
+- 認証: Supabase Auth によるログイン、サインアップ、ログアウト
 
-- プロジェクト構造の整理
-- 再利用 UI コンポーネントの追加
-- ホーム画面とプレースホルダーページの追加
-- 型定義と Supabase クライアント基盤の整備
-- Supabase SSR クライアントの分離
-- proxy によるセッション同期
-- SQL スキーマと RLS セットアップ手順の追加
-- ログイン、サインアップ、ログアウトの実装
-- /assignments への認証保護追加
-- assignments テーブルの CRUD 実装
-- 完了切り替えと締切順一覧の実装
-- 月間カレンダー画面の実装
-- classes、assignments、shifts、tasks の統合表示
-- shifts テーブルの CRUD 実装
-- 勤務時間と給料見込みの月間集計
-- 今日の授業、課題、シフト、タスクを集約したダッシュボード
-- classes テーブルの CRUD 実装
-- tasks テーブルの CRUD 実装
-- classes / tasks の画面追加と protected route 拡張
-- 各管理画面でデータ取得失敗時の部分表示フォールバックを追加
+## Status
 
-次の Step では UI 改善、テスト、デプロイ準備に進みます。
+主要機能の実装とデプロイは完了しています。
 
 ## Package Overview
 
@@ -64,13 +52,14 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-`.env.example` をコピーして作成する場合:
-
-```bash
-cp .env.example .env.local
-```
-
 Supabase の初期化手順は [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) にまとめています。
+
+## Deployment
+
+- Vercel でのデプロイを想定しています。
+- Environment Variables には `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_ANON_KEY` を設定します。
+- Supabase の Authentication > URL Configuration で本番 URL を `Site URL` と `Redirect URLs` に設定します。
+- 初期構築や全リセット時は [supabase/schema.sql](supabase/schema.sql) を Supabase SQL Editor で実行します。
 
 ## Directory Structure
 
