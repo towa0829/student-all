@@ -112,7 +112,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .order("due_date", { ascending: true }),
     supabase
       .from("job_types")
-      .select("id, name")
+      .select("id, name, hourly_wage")
       .eq("user_id", user.id),
     supabase
       .from("schedules")
@@ -190,6 +190,14 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
   const assignments: AssignmentRecord[] = assignmentsResult.error ? [] : (assignmentsResult.data ?? []);
   const tasks: TaskRecord[] = tasksResult.error ? [] : (tasksResult.data ?? []);
   const shifts: CalendarShiftRecord[] = resolvedShiftsError ? [] : shiftRows;
+  const upcomingAssignments = upcomingAssignmentsResult.error
+    ? []
+    : (upcomingAssignmentsResult.data ?? []);
+  const upcomingTasks = upcomingTasksResult.error
+    ? []
+    : (upcomingTasksResult.data ?? []).flatMap((item) =>
+        item.due_date ? [{ ...item, due_date: item.due_date }] : []
+      );
   const normalizedShifts: CalendarShiftRecord[] = shifts.map((shift) => ({
     ...shift,
     job_type_name: "job_type_name" in shift ? (shift.job_type_name ?? null) : null
@@ -234,10 +242,8 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       modalItem={modalItem ?? null}
       monthParam={formatDateKey(currentMonth).slice(0, 7)}
       schedules={schedules}
-      upcomingAssignments={
-        upcomingAssignmentsResult.error ? [] : (upcomingAssignmentsResult.data ?? [])
-      }
-      upcomingTasks={upcomingTasksResult.error ? [] : (upcomingTasksResult.data ?? [])}
+      upcomingAssignments={upcomingAssignments}
+      upcomingTasks={upcomingTasks}
       shifts={normalizedShifts}
       tasks={tasks}
       userEmail={user.email ?? null}

@@ -10,7 +10,6 @@ import {
   updateTaskFromCalendarAction,
   createAssignmentFromCalendarAction,
   createScheduleFromCalendarAction,
-  createShiftFromCalendarAction,
   createTaskFromCalendarAction
 } from "@/actions/calendar";
 import { deleteScheduleAction } from "@/actions/schedules";
@@ -19,6 +18,7 @@ import { deleteTaskAction } from "@/actions/tasks";
 import { Button } from "@/components/ui/button";
 import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
+import { CreateShiftForm } from "@/features/calendar/create-shift-form";
 import type { Database } from "@/types/supabase";
 
 type AssignmentRecord = Database["public"]["Tables"]["assignments"]["Row"];
@@ -63,7 +63,7 @@ type CalendarPageProps = {
   dataWarning?: string | null;
   editId: string | null;
   editType: "assignment" | "schedule" | "shift" | "task" | null;
-  jobTypes: { id: string; name: string }[];
+  jobTypes: { id: string; name: string; hourly_wage: number }[];
   modalItem:
     | AssignmentRecord
     | TaskRecord
@@ -827,75 +827,7 @@ export function CalendarPage({
               ) : null}
 
               {addType === "shift" ? (
-                <div className="space-y-4">
-                  <form action={createShiftFromCalendarAction} className="space-y-4" id="create-shift-form">
-                    <input name="month" type="hidden" value={monthParam} />
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-date">勤務日</label>
-                      <input
-                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-                        defaultValue={addDate}
-                        id="new-shift-date"
-                        name="date"
-                        required
-                        type="date"
-                      />
-                    </div>
-                    {jobTypes.length > 0 ? (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-job-type">勤務先</label>
-                        <select
-                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-                          id="new-shift-job-type"
-                          name="jobTypeId"
-                        >
-                          <option value="">選択しない</option>
-                          {jobTypes.map((jt) => (
-                            <option key={jt.id} value={jt.id}>{jt.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : null}
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-start">開始時刻</label>
-                        <input
-                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-                          id="new-shift-start"
-                          name="startTime"
-                          required
-                          type="time"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-end">終了時刻</label>
-                        <input
-                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-                          id="new-shift-end"
-                          name="endTime"
-                          required
-                          type="time"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-700" htmlFor="new-shift-wage">時給（円）</label>
-                      <input
-                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-                        defaultValue={1000}
-                        id="new-shift-wage"
-                        min={0}
-                        name="hourlyWage"
-                        required
-                        type="number"
-                      />
-                    </div>
-                  </form>
-                  <div className="flex items-center gap-2">
-                    <Button form="create-shift-form" type="submit">追加</Button>
-                    <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={`/calendar?month=${monthParam}&addDate=${addDate}`}>戻る</Link>
-                  </div>
-                </div>
+                <CreateShiftForm addDate={addDate} jobTypes={jobTypes} monthParam={monthParam} />
               ) : null}
 
               {addType === "task" ? (
