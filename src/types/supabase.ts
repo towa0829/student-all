@@ -80,10 +80,35 @@ export interface Database {
           }
         ];
       };
+      job_types: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          hourly_wage: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          hourly_wage: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          hourly_wage?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       shifts: {
         Row: {
           id: string;
           user_id: string;
+          job_type_id: string | null;
           date: string;
           start_time: string;
           end_time: string;
@@ -93,6 +118,7 @@ export interface Database {
         Insert: {
           id?: string;
           user_id: string;
+          job_type_id?: string | null;
           date: string;
           start_time: string;
           end_time: string;
@@ -102,13 +128,22 @@ export interface Database {
         Update: {
           id?: string;
           user_id?: string;
+          job_type_id?: string | null;
           date?: string;
           start_time?: string;
           end_time?: string;
           hourly_wage?: number;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "shifts_job_type_id_fkey";
+            columns: ["job_type_id"];
+            isOneToOne: false;
+            referencedRelation: "job_types";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       tasks: {
         Row: {

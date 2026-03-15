@@ -1,7 +1,11 @@
+"use client";
+
 import { CircleUserRound, LogOut } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type HeaderLink = {
   href: string;
@@ -28,15 +32,20 @@ export function FeatureHeader({
   signOutAction,
   userLabel
 }: FeatureHeaderProps) {
+  const pathname = usePathname();
+
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/95 shadow-[0_18px_48px_-36px_rgba(15,23,42,0.35)] backdrop-blur">
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-10">
           <div className="flex items-center justify-between gap-4 py-3">
-            <p className="text-sm font-bold tracking-wide text-slate-900 md:text-base">Student&apos;s All</p>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-600">Planner</p>
+              <p className="text-sm font-bold tracking-wide text-slate-900 md:text-base">Student&apos;s All</p>
+            </div>
 
             <details className="group relative">
-              <summary className="flex list-none cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <summary className="flex list-none cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700">
                 <CircleUserRound className="size-5" />
               </summary>
 
@@ -56,9 +65,18 @@ export function FeatureHeader({
             </details>
           </div>
 
-          <nav className="flex flex-wrap gap-3 pb-3 text-sm font-semibold text-brand-700">
+          <nav className="flex flex-wrap gap-2 pb-3">
             {links.map((link) => (
-              <Link href={link.href} key={link.href}>
+              <Link
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                  pathname === link.href
+                    ? "bg-slate-950 text-white shadow-sm"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                )}
+                href={link.href}
+                key={link.href}
+              >
                 {link.label}
               </Link>
             ))}
@@ -66,7 +84,7 @@ export function FeatureHeader({
         </div>
       </header>
 
-      <div className="h-34 md:h-38" />
+      <div className="h-16 md:h-20" />
     </>
   );
 }

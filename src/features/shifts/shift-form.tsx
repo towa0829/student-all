@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Panel } from "@/components/ui/panel";
 import { ShiftSubmitButton } from "@/features/shifts/shift-submit-button";
 import {
+  type JobTypeRecord,
   type ShiftFormState,
   type ShiftRecord,
   initialShiftFormState
@@ -15,6 +16,7 @@ type ShiftFormProps = {
   action: (state: ShiftFormState, formData: FormData) => Promise<ShiftFormState>;
   description: string;
   initialShift?: ShiftRecord;
+  jobTypes: JobTypeRecord[];
   pendingLabel: string;
   submitLabel: string;
   title: string;
@@ -24,11 +26,14 @@ export function ShiftForm({
   action,
   description,
   initialShift,
+  jobTypes,
   pendingLabel,
   submitLabel,
   title
 }: ShiftFormProps) {
   const [state, formAction] = useActionState(action, initialShiftFormState);
+  const [selectedJobTypeId, setSelectedJobTypeId] = useState(initialShift?.job_type_id ?? "");
+  const selectedJobType = jobTypes.find((jobType) => jobType.id === selectedJobTypeId);
 
   return (
     <Panel className="space-y-6 border-slate-200 bg-white">
@@ -39,6 +44,7 @@ export function ShiftForm({
 
       <form action={formAction} className="space-y-4">
         {initialShift ? <input name="shiftId" type="hidden" value={initialShift.id} /> : null}
+        <input name="jobTypeId" type="hidden" value={selectedJobTypeId} />
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="shift-date">
             勤務日
@@ -74,19 +80,46 @@ export function ShiftForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="shift-hourly-wage">
-            時給（円）
+          <label className="text-sm font-medium text-slate-700" htmlFor="shift-job-type">
+            バイト種類
           </label>
-          <Input
-            defaultValue={initialShift?.hourly_wage ?? ""}
-            id="shift-hourly-wage"
-            min={0}
-            name="hourlyWage"
-            required
-            step={1}
-            type="number"
-          />
+          <select
+            className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+            id="shift-job-type"
+            onChange={(event) => setSelectedJobTypeId(event.target.value)}
+            value={selectedJobTypeId}
+          >
+            <option value="">手入力で時給を設定</option>
+            {jobTypes.map((jobType) => (
+              <option key={jobType.id} value={jobType.id}>
+                {jobType.name} / {jobType.hourly_wage}円
+              </option>
+            ))}
+          </select>
         </div>
+
+        {selectedJobType ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <p className="font-semibold">選択中: {selectedJobType.name}</p>
+            <p className="mt-1">時給は {selectedJobType.hourly_wage} 円で自動入力されます。</p>
+            <input name="hourlyWage" type="hidden" value={selectedJobType.hourly_wage} />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700" htmlFor="shift-hourly-wage">
+              時給（円）
+            </label>
+            <Input
+              defaultValue={initialShift?.hourly_wage ?? ""}
+              id="shift-hourly-wage"
+              min={0}
+              name="hourlyWage"
+              required
+              step={1}
+              type="number"
+            />
+          </div>
+        )}
 
         {state.type === "error" ? (
           <p className="text-sm text-rose-600" role="status">

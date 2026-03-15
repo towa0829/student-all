@@ -39,6 +39,13 @@ function parseMonthParam(month?: string) {
 
 export default async function CalendarRoute({ searchParams }: CalendarRouteProps) {
   const { month } = await searchParams;
+  const today = new Date();
+  const weekLater = new Date(today);
+
+  weekLater.setDate(today.getDate() + 7);
+
+  const todayKey = formatDateKey(today);
+  const weekLaterKey = formatDateKey(weekLater);
   const currentMonth = parseMonthParam(month);
   const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
   const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
@@ -59,7 +66,14 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
     redirect("/login?next=/calendar");
   }
 
-  const [assignmentsResult, classesResult, shiftsResult, tasksResult] = await Promise.all([
+  const [
+    assignmentsResult,
+    classesResult,
+    shiftsResult,
+    tasksResult,
+    upcomingAssignmentsResult,
+    upcomingTasksResult
+  ] = await Promise.all([
     supabase
       .from("assignments")
       .select("id, user_id, class_id, title, due_date, status, memo, created_at")
@@ -75,7 +89,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .order("period", { ascending: true }),
     supabase
       .from("shifts")
-      .select("id, user_id, date, start_time, end_time, hourly_wage, created_at")
+      .select("id, user_id, job_type_id, date, start_time, end_time, hourly_wage, created_at")
       .eq("user_id", user.id)
       .gte("date", rangeStartKey)
       .lte("date", rangeEndKey)
@@ -87,6 +101,23 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .not("due_date", "is", null)
       .gte("due_date", rangeStartKey)
       .lte("due_date", rangeEndKey)
+      .order("due_date", { ascending: true }),
+    supabase
+      .from("assignments")
+      .select("id, title, due_date, status")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .gte("due_date", todayKey)
+      .lte("due_date", weekLaterKey)
+      .order("due_date", { ascending: true }),
+    supabase
+      .from("tasks")
+      .select("id, title, due_date, status")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .not("due_date", "is", null)
+      .gte("due_date", todayKey)
+      .lte("due_date", weekLaterKey)
       .order("due_date", { ascending: true })
   ]);
 
@@ -94,7 +125,9 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
     { error: assignmentsResult.error, table: "assignments" },
     { error: classesResult.error, table: "classes" },
     { error: shiftsResult.error, table: "shifts" },
-    { error: tasksResult.error, table: "tasks" }
+    { error: tasksResult.error, table: "tasks" },
+    { error: upcomingAssignmentsResult.error, table: "assignments_upcoming" },
+    { error: upcomingTasksResult.error, table: "tasks_upcoming" }
   ].filter((item) => item.error);
 
   if (queryErrors.length > 0) {
@@ -118,6 +151,10 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
           ? "一部データの取得に失敗したため、表示可能な情報のみを表示しています。"
           : null
       }
+      upcomingAssignments={
+        upcomingAssignmentsResult.error ? [] : (upcomingAssignmentsResult.data ?? [])
+      }
+      upcomingTasks={upcomingTasksResult.error ? [] : (upcomingTasksResult.data ?? [])}
       shifts={shiftsResult.error ? [] : (shiftsResult.data ?? [])}
       tasks={tasksResult.error ? [] : (tasksResult.data ?? [])}
       userEmail={user.email ?? null}

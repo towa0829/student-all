@@ -2,13 +2,19 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOutAction } from "@/actions/auth";
-import { createShiftAction, deleteShiftAction, updateShiftAction } from "@/actions/shifts";
+import {
+  createJobTypeAction,
+  createShiftAction,
+  deleteJobTypeAction,
+  deleteShiftAction,
+  updateShiftAction
+} from "@/actions/shifts";
 import { Button } from "@/components/ui/button";
 import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
 import { ShiftForm } from "@/features/shifts/shift-form";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import type { ShiftRecord } from "@/features/shifts/types";
+import type { JobTypeRecord, ShiftRecord } from "@/features/shifts/types";
 
 const currencyFormatter = new Intl.NumberFormat("ja-JP", {
   style: "currency",
@@ -69,6 +75,14 @@ function getSummary(shifts: ShiftRecord[]) {
   };
 }
 
+function getJobTypeLabel(jobTypes: JobTypeRecord[], jobTypeId: string | null) {
+  if (!jobTypeId) {
+    return "手入力時給";
+  }
+
+  return jobTypes.find((jobType) => jobType.id === jobTypeId)?.name ?? "削除済みのバイト種類";
+}
+
 function createMonthLink(currentMonth: Date, offset: number) {
   const next = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
   const month = String(next.getMonth() + 1).padStart(2, "0");
@@ -97,24 +111,41 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
     redirect("/login?next=/shifts");
   }
 
-  const { data: shifts, error } = await supabase
-    .from("shifts")
-    .select("id, user_id, date, start_time, end_time, hourly_wage, created_at")
-    .eq("user_id", user.id)
-    .gte("date", rangeStartKey)
-    .lte("date", rangeEndKey)
-    .order("date", { ascending: true })
-    .order("start_time", { ascending: true });
+  const [{ data: shifts, error: shiftsError }, { data: jobTypes, error: jobTypesError }] =
+    await Promise.all([
+      supabase
+        .from("shifts")
+        .select("id, user_id, job_type_id, date, start_time, end_time, hourly_wage, created_at")
+        .eq("user_id", user.id)
+        .gte("date", rangeStartKey)
+        .lte("date", rangeEndKey)
+        .order("date", { ascending: true })
+        .order("start_time", { ascending: true }),
+      supabase
+        .from("job_types")
+        .select("id, user_id, name, hourly_wage, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
+    ]);
 
-  if (error) {
-    console.warn("Shifts query failed:", {
-      code: error.code,
-      message: error.message,
-      table: "shifts"
-    });
+  const queryErrors = [
+    { error: shiftsError, table: "shifts" },
+    { error: jobTypesError, table: "job_types" }
+  ].filter((item) => item.error);
+
+  if (queryErrors.length > 0) {
+    console.warn(
+      "Shifts query failed:",
+      queryErrors.map((item) => ({
+        code: item.error?.code,
+        message: item.error?.message,
+        table: item.table
+      }))
+    );
   }
 
-  const shiftList = error ? [] : (shifts ?? []);
+  const shiftList = shiftsError ? [] : (shifts ?? []);
+  const jobTypeList = jobTypesError ? [] : (jobTypes ?? []);
   const editingShift = shiftList.find((shift) => shift.id === edit);
   const summary = getSummary(shiftList);
 
@@ -127,7 +158,7 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
           userLabel={user.email ?? "ユーザー"}
         />
 
-        {error ? (
+        {queryErrors.length > 0 ? (
           <Panel className="border-amber-200 bg-amber-50">
             <p className="text-sm font-medium text-amber-800">
               シフトデータの取得に失敗したため、表示可能な情報のみを表示しています。
@@ -171,7 +202,7 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
               <Panel className="space-y-3">
                 <h2 className="text-2xl font-semibold text-slate-950">シフトを登録しましょう</h2>
                 <p className="leading-8 text-slate-600">
-                  右側のフォームから勤務日、時間、時給を入力すると月間の勤務時間と給料見込みを集計できます。
+                  右側のフォームから勤務日、時間、バイト種類を入力すると月間の勤務時間と給料見込みを集計できます。
                 </p>
               </Panel>
             ) : (
@@ -189,6 +220,9 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
                         <h2 className="text-2xl font-semibold text-slate-950">
                           {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
                         </h2>
+                        <p className="text-sm text-slate-600">
+                          バイト種類 {getJobTypeLabel(jobTypeList, shift.job_type_id)}
+                        </p>
                         <p className="text-sm text-slate-600">時給 {currencyFormatter.format(shift.hourly_wage)}</p>
                         <p className="text-sm text-slate-600">勤務時間 {durationHours.toFixed(2)}h</p>
                         <p className="text-sm font-semibold text-emerald-700">見込み給料 {currencyFormatter.format(wage)}</p>
@@ -220,13 +254,79 @@ export default async function ShiftsPage({ searchParams }: ShiftsPageProps) {
               description={
                 editingShift
                   ? "勤務時間を更新すると月間集計に即時反映されます。"
-                  : "終了時刻は開始時刻より後の時刻を入力してください。"
+                  : "バイト種類を選ぶと時給が自動入力されます。終了時刻は開始時刻より後の時刻を入力してください。"
               }
               initialShift={editingShift}
+              jobTypes={jobTypeList}
               pendingLabel={editingShift ? "更新中..." : "作成中..."}
               submitLabel={editingShift ? "シフトを更新" : "シフトを作成"}
               title={editingShift ? "シフトを編集" : "新規シフトを作成"}
             />
+
+            <Panel className="space-y-4 border-slate-200 bg-white">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-950">バイト種類を登録</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  よく使う勤務先と時給を登録しておくと、シフト作成時に毎回入力せずに済みます。
+                </p>
+              </div>
+
+              <form action={createJobTypeAction} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700" htmlFor="job-type-name">
+                    バイト名
+                  </label>
+                  <input
+                    className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                    id="job-type-name"
+                    name="name"
+                    required
+                    type="text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700" htmlFor="job-type-wage">
+                    時給（円）
+                  </label>
+                  <input
+                    className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                    id="job-type-wage"
+                    min={0}
+                    name="hourlyWage"
+                    required
+                    step={1}
+                    type="number"
+                  />
+                </div>
+                <Button type="submit">バイト種類を追加</Button>
+              </form>
+
+              <div className="space-y-2">
+                {jobTypeList.length === 0 ? (
+                  <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                    まだ登録がありません。先にバイト種類を追加すると、シフト登録時に選択できます。
+                  </p>
+                ) : (
+                  jobTypeList.map((jobType) => (
+                    <div
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-4 py-3"
+                      key={jobType.id}
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{jobType.name}</p>
+                        <p className="text-xs text-slate-500">時給 {currencyFormatter.format(jobType.hourly_wage)}</p>
+                      </div>
+                      <form action={deleteJobTypeAction}>
+                        <input name="jobTypeId" type="hidden" value={jobType.id} />
+                        <Button className="px-3 py-2 text-xs" type="submit" variant="secondary">
+                          削除
+                        </Button>
+                      </form>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Panel>
 
             {editingShift ? (
               <Link className="inline-flex text-sm font-semibold text-emerald-700" href="/shifts">

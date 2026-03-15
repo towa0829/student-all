@@ -71,6 +71,8 @@ export async function createAssignmentAction(
   }
 
   revalidatePath("/assignments");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
   redirect("/assignments");
 }
 
@@ -103,6 +105,8 @@ export async function updateAssignmentAction(
   }
 
   revalidatePath("/assignments");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
   redirect("/assignments");
 }
 
@@ -124,6 +128,8 @@ export async function toggleAssignmentStatusAction(formData: FormData) {
     .eq("user_id", userId);
 
   revalidatePath("/assignments");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteAssignmentAction(formData: FormData) {
@@ -138,6 +144,8 @@ export async function deleteAssignmentAction(formData: FormData) {
   await supabase.from("assignments").delete().eq("id", assignmentId).eq("user_id", userId);
 
   revalidatePath("/assignments");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
 }
 
 export async function resetAssignmentFormAction() {
