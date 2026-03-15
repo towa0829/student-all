@@ -2,9 +2,18 @@ import { redirect } from "next/navigation";
 
 import { CalendarPage } from "@/features/calendar/calendar-page";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import type { Database } from "@/types/supabase";
+
+type AssignmentRecord = Database["public"]["Tables"]["assignments"]["Row"];
+type TaskRecord = Database["public"]["Tables"]["tasks"]["Row"];
+type CalendarShiftRecord = Database["public"]["Tables"]["shifts"]["Row"] & {
+  job_type_name?: string | null;
+};
 
 type CalendarRouteProps = {
   searchParams: Promise<{
+    editId?: string;
+    editType?: "assignment" | "shift" | "task";
     month?: string;
   }>;
 };
@@ -38,7 +47,7 @@ function parseMonthParam(month?: string) {
 }
 
 export default async function CalendarRoute({ searchParams }: CalendarRouteProps) {
-  const { month } = await searchParams;
+  const { editId, editType, month } = await searchParams;
   const today = new Date();
   const weekLater = new Date(today);
 
@@ -70,6 +79,7 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
     assignmentsResult,
     shiftsResult,
     tasksResult,
+    jobTypesResult,
     upcomingAssignmentsResult,
     upcomingTasksResult
   ] = await Promise.all([
@@ -96,6 +106,10 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .lte("due_date", rangeEndKey)
       .order("due_date", { ascending: true }),
     supabase
+      .from("job_types")
+      .select("id, name")
+      .eq("user_id", user.id),
+    supabase
       .from("assignments")
       .select("id, title, due_date, status")
       .eq("user_id", user.id)
@@ -114,8 +128,15 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
       .order("due_date", { ascending: true })
   ]);
 
-  let shiftRows = shiftsResult.data;
+  let shiftRows: CalendarShiftRecord[] = shiftsResult.error ? [] : ((shiftsResult.data ?? []) as CalendarShiftRecord[]);
   let resolvedShiftsError = shiftsResult.error;
+  const jobTypeMap = new Map<string, string>();
+
+  if (!jobTypesResult.error) {
+    (jobTypesResult.data ?? []).forEach((jobType) => {
+      jobTypeMap.set(jobType.id, jobType.name);
+    });
+  }
 
   if (shiftsResult.error?.code === "42703" && shiftsResult.error.message.includes("job_type_id")) {
     const legacyShiftsResult = await supabase
@@ -129,19 +150,43 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
     if (!legacyShiftsResult.error) {
       shiftRows = (legacyShiftsResult.data ?? []).map((shift) => ({
         ...shift,
+        job_type_name: null,
         job_type_id: null
       }));
       resolvedShiftsError = null;
     }
+  } else if (!resolvedShiftsError) {
+    shiftRows = (shiftRows ?? []).map((shift) => ({
+      ...shift,
+      job_type_name: shift.job_type_id ? (jobTypeMap.get(shift.job_type_id) ?? null) : null
+    }));
   }
 
   const queryErrors = [
     { error: assignmentsResult.error, table: "assignments" },
     { error: resolvedShiftsError, table: "shifts" },
     { error: tasksResult.error, table: "tasks" },
+    { error: jobTypesResult.error, table: "job_types" },
     { error: upcomingAssignmentsResult.error, table: "assignments_upcoming" },
     { error: upcomingTasksResult.error, table: "tasks_upcoming" }
   ].filter((item) => item.error);
+
+  const assignments: AssignmentRecord[] = assignmentsResult.error ? [] : (assignmentsResult.data ?? []);
+  const tasks: TaskRecord[] = tasksResult.error ? [] : (tasksResult.data ?? []);
+  const shifts: CalendarShiftRecord[] = resolvedShiftsError ? [] : shiftRows;
+  const normalizedShifts: CalendarShiftRecord[] = shifts.map((shift) => ({
+    ...shift,
+    job_type_name: "job_type_name" in shift ? (shift.job_type_name ?? null) : null
+  }));
+
+  const modalItem =
+    editId && editType
+      ? editType === "assignment"
+        ? assignments.find((item) => item.id === editId)
+        : editType === "task"
+          ? tasks.find((item) => item.id === editId)
+          : normalizedShifts.find((item) => item.id === editId)
+      : null;
 
   if (queryErrors.length > 0) {
     console.warn(
@@ -156,19 +201,23 @@ export default async function CalendarRoute({ searchParams }: CalendarRouteProps
 
   return (
     <CalendarPage
-      assignments={assignmentsResult.error ? [] : (assignmentsResult.data ?? [])}
+      assignments={assignments}
       currentMonth={currentMonth}
       dataWarning={
         queryErrors.length > 0
           ? "一部データの取得に失敗したため、表示可能な情報のみを表示しています。"
           : null
       }
+      editId={editId ?? null}
+      editType={editType ?? null}
+      modalItem={modalItem ?? null}
+      monthParam={formatDateKey(currentMonth).slice(0, 7)}
       upcomingAssignments={
         upcomingAssignmentsResult.error ? [] : (upcomingAssignmentsResult.data ?? [])
       }
       upcomingTasks={upcomingTasksResult.error ? [] : (upcomingTasksResult.data ?? [])}
-      shifts={resolvedShiftsError ? [] : (shiftRows ?? [])}
-      tasks={tasksResult.error ? [] : (tasksResult.data ?? [])}
+      shifts={normalizedShifts}
+      tasks={tasks}
       userEmail={user.email ?? null}
     />
   );

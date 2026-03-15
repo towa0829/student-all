@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { Check, ChevronLeft, ChevronRight, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 
-import {
-  deleteAssignmentAction,
-  toggleAssignmentStatusAction
-} from "@/actions/assignments";
+import { deleteAssignmentAction } from "@/actions/assignments";
 import { signOutAction } from "@/actions/auth";
+import {
+  updateAssignmentFromCalendarAction,
+  updateShiftFromCalendarAction,
+  updateTaskFromCalendarAction
+} from "@/actions/calendar";
 import { deleteShiftAction } from "@/actions/shifts";
-import { deleteTaskAction, toggleTaskStatusAction } from "@/actions/tasks";
+import { deleteTaskAction } from "@/actions/tasks";
 import { Button } from "@/components/ui/button";
 import { FeatureHeader } from "@/components/layout/feature-header";
 import { Panel } from "@/components/ui/panel";
@@ -16,14 +18,16 @@ import type { Database } from "@/types/supabase";
 type AssignmentRecord = Database["public"]["Tables"]["assignments"]["Row"];
 type ShiftRecord = Database["public"]["Tables"]["shifts"]["Row"];
 type TaskRecord = Database["public"]["Tables"]["tasks"]["Row"];
+type CalendarShiftRecord = ShiftRecord & {
+  job_type_name?: string | null;
+};
 
 type CalendarEvent = {
   id: string;
   type: "assignment" | "shift" | "task";
   title: string;
-  detail: string;
+  timeLabel?: string;
   dateKey: string;
-  editHref?: string;
   isCompleted: boolean;
   status?: "pending" | "completed";
 };
@@ -39,7 +43,15 @@ type CalendarPageProps = {
   assignments: AssignmentRecord[];
   currentMonth: Date;
   dataWarning?: string | null;
-  shifts: ShiftRecord[];
+  editId: string | null;
+  editType: "assignment" | "shift" | "task" | null;
+  modalItem:
+    | AssignmentRecord
+    | TaskRecord
+    | CalendarShiftRecord
+    | null;
+  monthParam: string;
+  shifts: CalendarShiftRecord[];
   tasks: TaskRecord[];
   upcomingAssignments: UpcomingItem[];
   upcomingTasks: UpcomingItem[];
@@ -49,14 +61,14 @@ type CalendarPageProps = {
 const dayLabels = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 const baseEventStyle: Record<CalendarEvent["type"], string> = {
-  assignment: "border-amber-200 bg-amber-50 text-amber-800",
-  shift: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  task: "border-violet-200 bg-violet-50 text-violet-800"
+  assignment: "border-orange-300 bg-orange-100 text-orange-900",
+  shift: "border-sky-300 bg-sky-100 text-sky-900",
+  task: "border-violet-300 bg-violet-100 text-violet-900"
 };
 
 function getEventStyle(event: CalendarEvent) {
   if ((event.type === "assignment" || event.type === "task") && event.isCompleted) {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    return "border-lime-300 bg-lime-100 text-lime-900";
   }
 
   return baseEventStyle[event.type];
@@ -92,7 +104,7 @@ function buildMonthGrid(currentMonth: Date) {
 
 function mergeEvents(
   assignments: AssignmentRecord[],
-  shifts: ShiftRecord[],
+  shifts: CalendarShiftRecord[],
   tasks: TaskRecord[]
 ) {
   const events = new Map<string, CalendarEvent[]>();
@@ -103,10 +115,8 @@ function mergeEvents(
     current.push({
       id: assignment.id,
       dateKey: assignment.due_date,
-      editHref: `/assignments?edit=${assignment.id}`,
       type: "assignment",
       title: assignment.title,
-      detail: "課題締切",
       isCompleted: assignment.status === "completed",
       status: assignment.status
     });
@@ -120,10 +130,9 @@ function mergeEvents(
     current.push({
       id: shift.id,
       dateKey: shift.date,
-      editHref: `/shifts?edit=${shift.id}&month=${shift.date.slice(0, 7)}`,
       type: "shift",
-      title: "バイトシフト",
-      detail: `${shift.start_time.slice(0, 5)} - ${shift.end_time.slice(0, 5)}`,
+      title: shift.job_type_name ?? "バイト",
+      timeLabel: `${shift.start_time.slice(0, 5)} - ${shift.end_time.slice(0, 5)}`,
       isCompleted: false
     });
 
@@ -140,10 +149,8 @@ function mergeEvents(
     current.push({
       id: task.id,
       dateKey: task.due_date,
-      editHref: `/tasks?edit=${task.id}`,
       type: "task",
       title: task.title,
-      detail: "タスク締切",
       isCompleted: task.status === "completed",
       status: task.status
     });
@@ -165,6 +172,10 @@ export function CalendarPage({
   assignments,
   currentMonth,
   dataWarning,
+  editId,
+  editType,
+  modalItem,
+  monthParam,
   shifts,
   tasks,
   upcomingAssignments,
@@ -180,6 +191,10 @@ export function CalendarPage({
     year: "numeric",
     month: "long"
   });
+  const closeModalLink = `/calendar?month=${monthParam}`;
+  const isAssignmentModal = editType === "assignment" && modalItem && "due_date" in modalItem && "memo" in modalItem;
+  const isTaskModal = editType === "task" && modalItem && "due_date" in modalItem && !("memo" in modalItem);
+  const isShiftModal = editType === "shift" && modalItem && "start_time" in modalItem;
 
   return (
     <main className="relative overflow-hidden">
@@ -254,78 +269,17 @@ export function CalendarPage({
                     </div>
                     <div className="space-y-2">
                       {dayEvents.slice(0, 4).map((event) => (
-                        <div
-                          className={`rounded-2xl border px-2 py-2 text-[11px] leading-5 ${getEventStyle(event)}`}
+                        <Link
+                          className={`block rounded-2xl border px-2 py-2 text-[11px] leading-5 transition-colors hover:brightness-[0.98] ${getEventStyle(event)}`}
+                          href={`/calendar?month=${monthParam}&editType=${event.type}&editId=${event.id}`}
                           key={event.id}
                         >
                           <p className="flex items-center gap-1 font-semibold">
                             {event.isCompleted ? <Check className="size-3" /> : null}
                             {event.title}
                           </p>
-                          <p>{event.detail}</p>
-                          {event.type === "assignment" ? (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <form action={toggleAssignmentStatusAction}>
-                                <input name="assignmentId" type="hidden" value={event.id} />
-                                <input name="currentStatus" type="hidden" value={event.status} />
-                                <Button className="px-2 py-1 text-[10px]" type="submit" variant="secondary">
-                                  {event.isCompleted ? <RotateCcw className="size-3" /> : <Check className="size-3" />}
-                                </Button>
-                              </form>
-                              <Link
-                                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-slate-800"
-                                href={event.editHref ?? "/assignments"}
-                              >
-                                <Pencil className="size-3" />
-                              </Link>
-                              <form action={deleteAssignmentAction}>
-                                <input name="assignmentId" type="hidden" value={event.id} />
-                                <Button className="px-2 py-1 text-[10px]" type="submit" variant="ghost">
-                                  <Trash2 className="size-3" />
-                                </Button>
-                              </form>
-                            </div>
-                          ) : null}
-                          {event.type === "task" ? (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <form action={toggleTaskStatusAction}>
-                                <input name="taskId" type="hidden" value={event.id} />
-                                <input name="currentStatus" type="hidden" value={event.status} />
-                                <Button className="px-2 py-1 text-[10px]" type="submit" variant="secondary">
-                                  {event.isCompleted ? <RotateCcw className="size-3" /> : <Check className="size-3" />}
-                                </Button>
-                              </form>
-                              <Link
-                                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-slate-800"
-                                href={event.editHref ?? "/tasks"}
-                              >
-                                <Pencil className="size-3" />
-                              </Link>
-                              <form action={deleteTaskAction}>
-                                <input name="taskId" type="hidden" value={event.id} />
-                                <Button className="px-2 py-1 text-[10px]" type="submit" variant="ghost">
-                                  <Trash2 className="size-3" />
-                                </Button>
-                              </form>
-                            </div>
-                          ) : null}
-                          {event.type === "shift" ? (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <Link
-                                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-2 py-1 text-[10px] font-semibold text-white transition-colors hover:bg-slate-800"
-                                href={event.editHref ?? "/shifts"}
-                              >
-                                <Pencil className="size-3" />
-                              </Link>
-                              <form action={deleteShiftAction}>
-                                <input name="shiftId" type="hidden" value={event.id} />
-                                <Button className="px-2 py-1 text-[10px]" type="submit" variant="ghost">
-                                  <Trash2 className="size-3" />
-                                </Button>
-                              </form>
-                            </div>
-                          ) : null}
-                        </div>
+                          {event.timeLabel ? <p>{event.timeLabel}</p> : null}
+                        </Link>
                       ))}
                       {dayEvents.length > 4 ? (
                         <p className="text-[11px] font-semibold text-slate-500">
@@ -368,6 +322,211 @@ export function CalendarPage({
             </Panel>
           </div>
         </section>
+
+        {editId && modalItem ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4">
+            <Panel className="max-h-[85vh] w-full max-w-xl overflow-auto border-slate-200 bg-white">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900">予定を編集</h3>
+                <Link className="text-sm font-semibold text-slate-500 hover:text-slate-700" href={closeModalLink}>
+                  閉じる
+                </Link>
+              </div>
+
+              {isAssignmentModal ? (
+                <div className="space-y-4">
+                  <form action={updateAssignmentFromCalendarAction} className="space-y-4" id="calendar-assignment-form">
+                    <input name="assignmentId" type="hidden" value={modalItem.id} />
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="modal-assignment-title">
+                        課題名
+                      </label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={modalItem.title}
+                        id="modal-assignment-title"
+                        name="title"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-assignment-date">
+                          締切日
+                        </label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.due_date}
+                          id="modal-assignment-date"
+                          name="dueDate"
+                          required
+                          type="date"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-assignment-status">
+                          状態
+                        </label>
+                        <select
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.status}
+                          id="modal-assignment-status"
+                          name="status"
+                        >
+                          <option value="pending">未完了</option>
+                          <option value="completed">完了</option>
+                        </select>
+                      </div>
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="calendar-assignment-form" type="submit">保存</Button>
+                    <form action={deleteAssignmentAction}>
+                      <input name="assignmentId" type="hidden" value={modalItem.id} />
+                      <Button className="bg-rose-600 text-white shadow-none hover:bg-rose-700" type="submit">
+                        削除
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+
+              {isTaskModal ? (
+                <div className="space-y-4">
+                  <form action={updateTaskFromCalendarAction} className="space-y-4" id="calendar-task-form">
+                    <input name="taskId" type="hidden" value={modalItem.id} />
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="modal-task-title">
+                        タスク名
+                      </label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={modalItem.title}
+                        id="modal-task-title"
+                        name="title"
+                        required
+                        type="text"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-task-date">
+                          締切日
+                        </label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.due_date ?? ""}
+                          id="modal-task-date"
+                          name="dueDate"
+                          type="date"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-task-status">
+                          状態
+                        </label>
+                        <select
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.status}
+                          id="modal-task-status"
+                          name="status"
+                        >
+                          <option value="pending">未完了</option>
+                          <option value="completed">完了</option>
+                        </select>
+                      </div>
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="calendar-task-form" type="submit">保存</Button>
+                    <form action={deleteTaskAction}>
+                      <input name="taskId" type="hidden" value={modalItem.id} />
+                      <Button className="bg-rose-600 text-white shadow-none hover:bg-rose-700" type="submit">
+                        削除
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+
+              {isShiftModal ? (
+                <div className="space-y-4">
+                  <form action={updateShiftFromCalendarAction} className="space-y-4" id="calendar-shift-form">
+                    <input name="shiftId" type="hidden" value={modalItem.id} />
+                    <input name="month" type="hidden" value={monthParam} />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="modal-shift-date">
+                        勤務日
+                      </label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={modalItem.date}
+                        id="modal-shift-date"
+                        name="date"
+                        required
+                        type="date"
+                      />
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-shift-start">
+                          開始時刻
+                        </label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.start_time.slice(0, 5)}
+                          id="modal-shift-start"
+                          name="startTime"
+                          required
+                          type="time"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="modal-shift-end">
+                          終了時刻
+                        </label>
+                        <input
+                          className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                          defaultValue={modalItem.end_time.slice(0, 5)}
+                          id="modal-shift-end"
+                          name="endTime"
+                          required
+                          type="time"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700" htmlFor="modal-shift-wage">
+                        時給（円）
+                      </label>
+                      <input
+                        className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+                        defaultValue={modalItem.hourly_wage}
+                        id="modal-shift-wage"
+                        min={0}
+                        name="hourlyWage"
+                        required
+                        type="number"
+                      />
+                    </div>
+                  </form>
+                  <div className="flex items-center gap-2">
+                    <Button form="calendar-shift-form" type="submit">保存</Button>
+                    <form action={deleteShiftAction}>
+                      <input name="shiftId" type="hidden" value={modalItem.id} />
+                      <Button className="bg-rose-600 text-white shadow-none hover:bg-rose-700" type="submit">
+                        削除
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              ) : null}
+            </Panel>
+          </div>
+        ) : null}
       </div>
     </main>
   );
